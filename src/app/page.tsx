@@ -1,7 +1,15 @@
 import Link from 'next/link';
 import Logo from '@/components/Logo';
 
-export default function Home() {
+import { redirect } from 'next/navigation';
+
+export default async function Home(props: { searchParams: Promise<{ code?: string }> }) {
+  const searchParams = await props.searchParams;
+
+  if (searchParams.code) {
+    redirect(`/auth/callback?code=${searchParams.code}`);
+  }
+
   return (
     <main className="min-h-screen bg-black text-white selection:bg-primary/30 selection:text-primary">
       {/* Navigation */}
