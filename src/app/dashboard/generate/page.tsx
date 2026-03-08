@@ -61,6 +61,26 @@ function GenerateForm() {
         }
     }
 
+    const [suggesting, setSuggesting] = useState(false)
+
+    const handleSuggestTopic = async () => {
+        if (!selectedSeriesId) return
+        setSuggesting(true)
+        try {
+            const res = await fetch('/api/jobs/suggest-topic', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ seriesId: selectedSeriesId }),
+            })
+            const data = await res.json()
+            if (data.topic) setTopic(data.topic)
+        } catch (error) {
+            console.error(error)
+        } finally {
+            setSuggesting(false)
+        }
+    }
+
     const selectedSeries = series.find(s => s.id === selectedSeriesId)
 
     return (
@@ -125,12 +145,18 @@ function GenerateForm() {
                         <div className="mb-8">
                             <div className="flex items-center justify-between mb-2">
                                 <label className="text-xs font-bold text-[#52525b] uppercase tracking-widest">Episode Topic</label>
-                                <span className="text-[10px] text-[#52525b] font-medium">OPTIONAL — AI CAN DECIDE</span>
+                                <button
+                                    onClick={handleSuggestTopic}
+                                    disabled={suggesting}
+                                    className="text-[10px] text-blue-400 font-bold uppercase tracking-widest hover:text-blue-300 transition-colors disabled:opacity-50"
+                                >
+                                    {suggesting ? 'Brainstorming...' : '✨ Magic Suggest'}
+                                </button>
                             </div>
                             <textarea
                                 value={topic}
                                 onChange={e => setTopic(e.target.value)}
-                                placeholder={`e.g. A new discovery in ${selectedSeries.niche}...`}
+                                placeholder={`Leave blank for AI decision, or type a custom topic...`}
                                 className="w-full h-32 p-4 rounded-xl border border-white/5 bg-white/[0.02] text-sm resize-none focus:outline-none focus:border-white/20 transition-colors placeholder:text-[#52525b]"
                             />
                         </div>

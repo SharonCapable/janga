@@ -48,6 +48,11 @@ export async function POST(request: Request) {
         }
     }
 
+    // FALLBACK: If still no topic, use the series niche/name
+    if (!finalTopic || finalTopic.trim() === "") {
+        finalTopic = `${series.niche} Update: Episode ${series.episodes.length + 1}`
+    }
+
     // 3. Create Video Project (Episode)
     const project = await prisma.videoProject.create({
         data: {
