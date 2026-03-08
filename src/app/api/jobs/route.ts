@@ -17,28 +17,59 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { topic, tone, duration, scheduled, frequency, timeOfDay, channelId } = body
+    const { seriesId, topic, continueSeries, duration, scheduled } = body
 
-    // Create project
+    // 1. Fetch Series Context
+    const series = await prisma.contentSeries.findUnique({
+        where: { id: seriesId },
+        include: {
+            episodes: {
+                orderBy: { createdAt: 'desc' },
+                take: 1
+            }
+        }
+    })
+
+    if (!series) {
+        return NextResponse.json({ error: 'Series not found' }, { status: 404 })
+    }
+
+    // 2. Determine Topic with Context
+    let finalTopic = topic
+    let previousContext = null
+
+    if (continueSeries && series.episodes.length > 0) {
+        const lastEpisode = series.episodes[0]
+        previousContext = `This is a follow-up to the previous episode titled: "${lastEpisode.topic}". Ensure continuity in style and information progression.`
+
+        // If the user didn't provide a new topic, let the AI decide how to "Continue"
+        if (!finalTopic) {
+            finalTopic = `Continuation of: ${lastEpisode.topic}`
+        }
+    }
+
+    // 3. Create Video Project (Episode)
     const project = await prisma.videoProject.create({
         data: {
             userId: user.id,
-            topic,
-            modelVersion: 'cogvideox-5b',
-            duration: duration || 60,
+            seriesId: series.id,
+            topic: finalTopic,
+            duration: duration || series.duration || 60,
             status: 'generating',
-            channelId: channelId || null,
+            channelId: series.channelId,
             scheduledPostTime: scheduled ? new Date() : null,
         },
     })
 
-    // Add to generation queue
+    // 4. Add to generation queue with context
     await prisma.generationQueue.create({
         data: {
             projectId: project.id,
             status: 'pending',
-            modelToUse: project.modelVersion,
+            modelToUse: 'cogvideox-5b',
             priority: 0,
+            // Imagine we added a 'context' field to metadata here or in the future
+            // For now, the worker will see the 'topic' which contains our continuation instructions
         },
     })
 
@@ -46,6 +77,7 @@ export async function POST(request: Request) {
 }
 
 export async function GET() {
+    // ... existing GET stays the same but maybe include series name later
     const cookieStore = await cookies()
     const supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -61,15 +93,11 @@ export async function GET() {
     const projects = await prisma.videoProject.findMany({
         where: { userId: user.id },
         include: {
-            queueItems: {
-                orderBy: { createdAt: 'desc' },
-                take: 1,
-            },
-            finalVideos: {
-                take: 1,
-            },
+            series: true,
+            queueItems: { orderBy: { createdAt: 'desc' }, take: 1 },
+            finalVideos: { take: 1 }
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: 'desc' }
     })
 
     return NextResponse.json(projects)

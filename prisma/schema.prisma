@@ -15,14 +15,31 @@ model User {
   createdAt        DateTime        @default(now()) @map("created_at")
   subscriptionTier String          @default("free") @map("subscription_tier")
   onboarded        Boolean         @default(false)
-  defaultNiche     String?         @map("default_niche")
-  defaultTone      String?         @map("default_tone")
-  channels         Channel[]
+  series           ContentSeries[]
   projects         VideoProject[]
+  channels         Channel[]
   accounts         Account[]
   sessions         Session[]
 
   @@map("users")
+}
+
+model ContentSeries {
+  id           String         @id @default(cuid())
+  userId       String         @map("user_id")
+  user         User           @relation(fields: [userId], references: [id])
+  name         String         // e.g. "Daily Finance Facts"
+  niche        String         // e.g. "Finance"
+  tone         String         // e.g. "Professional"
+  duration     Int            @default(60)
+  platform     String         // tiktok, youtube
+  channelId    String?        @map("channel_id")
+  channel      Channel?       @relation(fields: [channelId], references: [id])
+  episodes     VideoProject[]
+  createdAt    DateTime       @default(now()) @map("created_at")
+  autoSchedule Boolean        @default(false) @map("auto_schedule")
+
+  @@map("content_series")
 }
 
 model Account {
@@ -56,14 +73,15 @@ model Session {
 }
 
 model Channel {
-  id           String         @id @default(cuid())
-  userId       String         @map("user_id")
-  user         User           @relation(fields: [userId], references: [id])
-  platform     String         // tiktok, youtube
-  channelName  String         @map("channel_name")
-  oauthToken   String         @map("oauth_token") // encrypted
-  refreshToken String?        @map("refresh_token")
-  connectedAt  DateTime       @default(now()) @map("connected_at")
+  id           String          @id @default(cuid())
+  userId       String          @map("user_id")
+  user         User            @relation(fields: [userId], references: [id])
+  platform     String          // tiktok, youtube
+  channelName  String          @map("channel_name")
+  oauthToken   String          @map("oauth_token") // encrypted
+  refreshToken String?         @map("refresh_token")
+  connectedAt  DateTime        @default(now()) @map("connected_at")
+  series       ContentSeries[]
   projects     VideoProject[]
 
   @@map("channels")
@@ -73,6 +91,8 @@ model VideoProject {
   id                String           @id @default(cuid())
   userId            String           @map("user_id")
   user              User             @relation(fields: [userId], references: [id])
+  seriesId          String?          @map("series_id")
+  series            ContentSeries?   @relation(fields: [seriesId], references: [id])
   channelId         String?          @map("channel_id")
   channel           Channel?         @relation(fields: [channelId], references: [id])
   topic             String

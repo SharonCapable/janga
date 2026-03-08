@@ -1,318 +1,175 @@
+'use client'
 
-'use client';
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import Logo from '@/components/Logo'
 
-import { useState } from 'react';
-import { ArrowLeft, Send, Sparkles, Wand2, Clock, Globe } from 'lucide-react';
-import Link from 'next/link';
-import { createProject } from './actions';
-import { useRouter } from 'next/navigation';
-import Logo from '@/components/Logo';
+const TONES = [
+    'Cinematic',
+    'Educational',
+    'Dramatic',
+    'Calm & Soothing',
+    'Mysterious',
+    'Inspirational',
+]
 
-export default function NewProject() {
-    const router = useRouter();
-    const [step, setStep] = useState(1);
-    const [topic, setTopic] = useState('');
-    const [model, setModel] = useState('standard');
-    const [duration, setDuration] = useState('60'); // default to 60s
-    const [tone, setTone] = useState('Epic');
-    const [musicStyle, setMusicStyle] = useState('Cinematic');
-    const [voice, setVoice] = useState('Traditional Griot (Cloned)');
-    const [isSubmitting, setIsSubmitting] = useState(false);
+const PLATFORMS = [
+    { id: 'tiktok', label: 'TikTok' },
+    { id: 'instagram', label: 'Instagram Reels' },
+    { id: 'youtube', label: 'YouTube Shorts' },
+]
 
-    const handleSubmit = async () => {
-        setIsSubmitting(true);
+export default function NewSeriesPage() {
+    const router = useRouter()
+    const [name, setName] = useState('')
+    const [niche, setNiche] = useState('')
+    const [tone, setTone] = useState('')
+    const [duration, setDuration] = useState('60')
+    const [platform, setPlatform] = useState('tiktok')
+    const [submitting, setSubmitting] = useState(false)
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        setSubmitting(true)
+
         try {
-            const result = await createProject({
-                topic,
-                model,
-                duration: parseInt(duration),
-                tone,
-                musicStyle,
-                voice,
-            });
-            if (result.success) {
-                router.push('/dashboard');
+            const res = await fetch('/api/onboarding', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    seriesName: name,
+                    niche,
+                    tone,
+                    duration,
+                    platform
+                }),
+            })
+            if (res.ok) {
+                router.push('/dashboard')
             }
         } catch (error) {
-            console.error('Failed to create project:', error);
-            alert('Failed to create project. Please try again.');
+            console.error(error)
         } finally {
-            setIsSubmitting(false);
+            setSubmitting(false)
         }
-    };
+    }
 
     return (
-        <main style={{ minHeight: '100vh', padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
-            <header style={{ marginBottom: '3rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <Link href="/dashboard" className="glass-card" style={{ padding: '10px' }}>
-                    <ArrowLeft size={20} />
-                </Link>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <Logo size={32} showText={false} />
-                    <h1 style={{ fontSize: '1.25rem', fontWeight: '800', letterSpacing: '-0.02em' }}>
-                        NEW <span className="text-gradient">AUTOMATION</span>
-                    </h1>
+        <div className="min-h-screen flex bg-[#09090b] text-[#fafafa]">
+            <aside className="w-64 border-r border-white/5 flex flex-col p-6 shrink-0 bg-[#09090b]">
+                <div className="mb-12">
+                    <Logo size={36} showText={true} />
                 </div>
-            </header>
+                <nav className="flex flex-col gap-1 flex-1">
+                    <SidebarLink href="/dashboard" label="Series Manager" active />
+                    <SidebarLink href="/dashboard/videos" label="All Episodes" />
+                    <SidebarLink href="/dashboard/settings" label="Settings" />
+                </nav>
+            </aside>
 
-            {/* Progress Stepper */}
-            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '3rem' }}>
-                {[1, 2, 3, 4].map((s) => (
-                    <div key={s} style={{
-                        flex: 1,
-                        height: '4px',
-                        background: step >= s ? 'hsl(var(--primary))' : 'hsl(var(--surface))',
-                        borderRadius: '2px',
-                        transition: 'background 0.3s'
-                    }} />
-                ))}
-            </div>
+            <main className="flex-1 p-10 overflow-y-auto max-w-2xl">
+                <Link href="/dashboard" className="text-sm text-[#a1a1aa] hover:text-white transition-colors mb-6 inline-block">
+                    ← Back to manager
+                </Link>
 
-            <div className="animate-fade-in">
-                {step === 1 && (
-                    <div className="glass-card" style={{ padding: '3rem' }}>
-                        <h2 style={{ fontSize: '2rem', marginBottom: '1.5rem' }}>What's the topic?</h2>
-                        <p style={{ color: 'hsl(var(--text-secondary))', marginBottom: '2rem' }}>
-                            Enter a subject or a prompt. Our AI will research and generate a script for you.
-                        </p>
-                        <textarea
-                            value={topic}
-                            onChange={(e) => setTopic(e.target.value)}
-                            placeholder="e.g. The forgotten empires of West Africa..."
-                            style={{
-                                width: '100%',
-                                height: '150px',
-                                background: 'hsl(var(--surface))',
-                                border: '1px solid var(--glass-border)',
-                                borderRadius: '12px',
-                                padding: '1.5rem',
-                                color: 'white',
-                                fontSize: '1.1rem',
-                                marginBottom: '2rem',
-                                resize: 'none'
-                            }}
-                        />
-                        <button
-                            className="btn-primary"
-                            style={{ width: '100%' }}
-                            onClick={() => setStep(2)}
-                            disabled={!topic.trim()}
-                        >
-                            Continue <Sparkles size={18} />
-                        </button>
-                    </div>
-                )}
+                <h1 className="text-3xl font-bold tracking-tight mb-2">Launch New Series</h1>
+                <p className="text-[#a1a1aa] text-sm mb-10">
+                    Define the identity for your next content brand.
+                </p>
 
-                {step === 2 && (
-                    <div className="glass-card" style={{ padding: '3rem' }}>
-                        <h2 style={{ fontSize: '2rem', marginBottom: '1.5rem' }}>Visual Engine & Format</h2>
-                        <p style={{ color: 'hsl(var(--text-secondary))', marginBottom: '2rem' }}>
-                            Choose the quality level and duration for your content.
-                        </p>
+                <form onSubmit={handleSubmit} className="space-y-8">
+                    <div className="space-y-4">
+                        <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/5 space-y-4">
+                            <div>
+                                <label className="text-xs font-bold text-[#52525b] uppercase tracking-widest ml-1">Series Name</label>
+                                <input
+                                    required
+                                    type="text"
+                                    className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 mt-2 text-sm outline-none focus:border-primary"
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    placeholder="e.g. World History Daily"
+                                />
+                            </div>
 
-                        <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>Rendering Engine</h3>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
-                            <ModelOption
-                                id="standard"
-                                name="Standard Performance"
-                                desc="Optimized for speed. Perfect for daily updates."
-                                active={model === 'standard'}
-                                onSelect={() => setModel('standard')}
-                            />
-                            <ModelOption
-                                id="cinematic"
-                                name="Cinematic High-Detail"
-                                desc="Priority rendering with enhanced detail and realism."
-                                active={model === 'cinematic'}
-                                onSelect={() => setModel('cinematic')}
-                            />
-                        </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-xs font-bold text-[#52525b] uppercase tracking-widest ml-1">Niche</label>
+                                    <input
+                                        required
+                                        type="text"
+                                        className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 mt-2 text-sm outline-none focus:border-primary"
+                                        value={niche}
+                                        onChange={(e) => setNiche(e.target.value)}
+                                        placeholder="e.g. History"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-[#52525b] uppercase tracking-widest ml-1">Tone</label>
+                                    <select
+                                        required
+                                        className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 mt-2 text-sm outline-none focus:border-primary appearance-none"
+                                        value={tone}
+                                        onChange={(e) => setTone(e.target.value)}
+                                    >
+                                        <option value="">Select Tone</option>
+                                        {TONES.map(t => <option key={t} value={t}>{t}</option>)}
+                                    </select>
+                                </div>
+                            </div>
 
-                        <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>Video Duration</h3>
-                        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-                            <button
-                                onClick={() => setDuration('30')}
-                                style={{
-                                    flex: 1,
-                                    padding: '1rem',
-                                    borderRadius: '12px',
-                                    border: `2px solid ${duration === '30' ? 'hsl(var(--primary))' : 'var(--glass-border)'}`,
-                                    background: duration === '30' ? 'hsla(var(--primary), 0.1)' : 'transparent',
-                                    fontWeight: 600,
-                                    transition: 'all 0.2s'
-                                }}
-                            >
-                                30 Seconds
-                            </button>
-                            <button
-                                onClick={() => setDuration('60')}
-                                style={{
-                                    flex: 1,
-                                    padding: '1rem',
-                                    borderRadius: '12px',
-                                    border: `2px solid ${duration === '60' ? 'hsl(var(--primary))' : 'var(--glass-border)'}`,
-                                    background: duration === '60' ? 'hsla(var(--primary), 0.1)' : 'transparent',
-                                    fontWeight: 600,
-                                    transition: 'all 0.2s'
-                                }}
-                            >
-                                60 Seconds
-                            </button>
-                        </div>
-
-                        <div style={{ display: 'flex', gap: '1rem', marginTop: '3rem' }}>
-                            <button className="glass-card" style={{ padding: '12px 24px' }} onClick={() => setStep(1)}>Back</button>
-                            <button className="btn-primary" style={{ flex: 1 }} onClick={() => setStep(3)}>Configure Style</button>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-xs font-bold text-[#52525b] uppercase tracking-widest ml-1">Target Platform</label>
+                                    <select
+                                        className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 mt-2 text-sm outline-none focus:border-primary appearance-none"
+                                        value={platform}
+                                        onChange={(e) => setPlatform(e.target.value)}
+                                    >
+                                        {PLATFORMS.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-[#52525b] uppercase tracking-widest ml-1">Video Duration</label>
+                                    <select
+                                        className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 mt-2 text-sm outline-none focus:border-primary appearance-none"
+                                        value={duration}
+                                        onChange={(e) => setDuration(e.target.value)}
+                                    >
+                                        <option value="30">30 Seconds</option>
+                                        <option value="60">60 Seconds</option>
+                                        <option value="90">90 Seconds</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                )}
 
-                {step === 3 && (
-                    <div className="glass-card" style={{ padding: '3rem' }}>
-                        <h2 style={{ fontSize: '2rem', marginBottom: '1.5rem' }}>Tone & Aesthetics</h2>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '2.5rem' }}>
-                            <StyleSelect
-                                label="Narration Tone"
-                                value={tone}
-                                onChange={(e: any) => setTone(e.target.value)}
-                                options={['Epic', 'Educational', 'Mysterious', 'Warm Storytelling']}
-                            />
-                            <StyleSelect
-                                label="Music Style"
-                                value={musicStyle}
-                                onChange={(e: any) => setMusicStyle(e.target.value)}
-                                options={['Cinematic', 'Lo-fi', 'Traditional African', 'Ambient']}
-                            />
-                        </div>
-
-                        <h3 style={{ fontSize: '1.25rem', marginBottom: '1rem' }}>Voice Narrative</h3>
-                        <p style={{ color: 'hsl(var(--text-secondary))', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
-                            Select an authentic voice or use your cloned presets.
-                        </p>
-
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2.5rem' }}>
-                            <VoiceOption
-                                name="Traditional Griot (Cloned)"
-                                selected={voice === 'Traditional Griot (Cloned)'}
-                                onClick={() => setVoice('Traditional Griot (Cloned)')}
-                            />
-                            <VoiceOption
-                                name="Modern Academic"
-                                selected={voice === 'Modern Academic'}
-                                onClick={() => setVoice('Modern Academic')}
-                            />
-                            <VoiceOption
-                                name="Deep Cinematic"
-                                selected={voice === 'Deep Cinematic'}
-                                onClick={() => setVoice('Deep Cinematic')}
-                            />
-                        </div>
-
-                        <div style={{ display: 'flex', gap: '1rem' }}>
-                            <button className="glass-card" style={{ padding: '12px 24px' }} onClick={() => setStep(2)}>Back</button>
-                            <button className="btn-primary" style={{ flex: 1 }} onClick={() => setStep(4)}>Finalize Schedule</button>
-                        </div>
-                    </div>
-                )}
-
-                {step === 4 && (
-                    <div className="glass-card" style={{ padding: '3rem', textAlign: 'center' }}>
-                        <Clock size={48} style={{ color: 'hsl(var(--primary))', marginBottom: '1.5rem' }} />
-                        <h2 style={{ fontSize: '2rem', marginBottom: '1.5rem' }}>Ready to Launch?</h2>
-                        <p style={{ color: 'hsl(var(--text-secondary))', marginBottom: '2rem' }}>
-                            Setting schedule for: **Daily at 18:00 (UTC)**.<br />
-                            Target Duration: **{duration} Seconds**.<br />
-                            A first draft will be generated in ~5 minutes for your approval.
-                        </p>
-                        <button
-                            className="btn-primary"
-                            style={{ width: '100%' }}
-                            onClick={handleSubmit}
-                            disabled={isSubmitting}
-                        >
-                            {isSubmitting ? 'Deploying...' : 'Deploy Automation'} <Send size={18} />
-                        </button>
-                    </div>
-                )}
-            </div>
-        </main>
-    );
+                    <button
+                        type="submit"
+                        disabled={submitting}
+                        className="w-full py-5 bg-white text-black text-base font-black rounded-2xl hover:bg-zinc-200 transition-all disabled:opacity-50"
+                    >
+                        {submitting ? 'Creating...' : 'Activate Series'}
+                    </button>
+                </form>
+            </main>
+        </div>
+    )
 }
 
-function ModelOption({ id, name, desc, active, onSelect }: any) {
+function SidebarLink({ href, label, active = false }: { href: string; label: string; active?: boolean }) {
     return (
-        <div
-            onClick={onSelect}
+        <Link
+            href={href}
+            className="px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
             style={{
-                padding: '1.5rem',
-                borderRadius: '16px',
-                border: `2px solid ${active ? 'hsl(var(--primary))' : 'var(--glass-border)'}`,
-                background: active ? 'hsla(var(--primary), 0.05)' : 'hsla(240, 10%, 15%, 0.3)',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '1rem'
+                background: active ? 'rgba(255,255,255,0.05)' : 'transparent',
+                color: active ? '#fafafa' : '#a1a1aa',
             }}
         >
-            <div style={{
-                width: '24px',
-                height: '24px',
-                borderRadius: '50%',
-                border: `2px solid ${active ? 'hsl(var(--primary))' : 'var(--text-secondary)'}`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-            }}>
-                {active && <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: 'hsl(var(--primary))' }} />}
-            </div>
-            <div>
-                <p style={{ fontWeight: 'bold' }}>{name}</p>
-                <p style={{ fontSize: '0.9rem', color: 'hsl(var(--text-secondary))' }}>{desc}</p>
-            </div>
-        </div>
-    );
-}
-
-function VoiceOption({ name, selected = false, onClick }: { name: string, selected?: boolean, onClick: () => void }) {
-    return (
-        <div
-            onClick={onClick}
-            style={{
-                padding: '1rem',
-                borderRadius: '12px',
-                border: `1px solid ${selected ? 'hsl(var(--primary))' : 'var(--glass-border)'}`,
-                background: selected ? 'hsla(var(--primary), 0.05)' : 'hsl(var(--surface))',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                cursor: 'pointer'
-            }}
-        >
-            <span style={{ fontWeight: selected ? 600 : 400 }}>{name}</span>
-            {selected && <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'hsl(var(--primary))' }} />}
-        </div>
-    );
-}
-
-function StyleSelect({ label, value, onChange, options }: any) {
-    return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <p style={{ fontSize: '0.9rem', fontWeight: 500 }}>{label}</p>
-            <select
-                value={value}
-                onChange={onChange}
-                style={{
-                    padding: '12px',
-                    background: 'hsl(var(--surface))',
-                    color: 'white',
-                    border: '1px solid var(--glass-border)',
-                    borderRadius: '8px'
-                }}
-            >
-                {options.map((o: string) => <option key={o} value={o}>{o}</option>)}
-            </select>
-        </div>
+            {label}
+        </Link>
     )
 }

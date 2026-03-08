@@ -16,16 +16,25 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { niche, tone } = await request.json()
+    const { seriesName, niche, tone, duration, platform } = await request.json()
 
-    await prisma.user.update({
-        where: { id: user.id },
-        data: {
-            defaultNiche: niche,
-            defaultTone: tone,
-            onboarded: true,
-        },
-    })
+    // Create the first series for the user
+    await prisma.$transaction([
+        prisma.contentSeries.create({
+            data: {
+                userId: user.id,
+                name: seriesName || `${niche} Chronicles`,
+                niche,
+                tone,
+                duration: parseInt(duration) || 60,
+                platform: platform || 'tiktok',
+            }
+        }),
+        prisma.user.update({
+            where: { id: user.id },
+            data: { onboarded: true },
+        })
+    ])
 
     return NextResponse.json({ success: true })
 }

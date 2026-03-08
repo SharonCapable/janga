@@ -17,56 +17,57 @@ export default async function Dashboard() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) redirect('/login')
 
-    // Check onboarding
-    const dbUser = await prisma.user.findUnique({ where: { id: user.id } })
+    // Check onboarding & Fetch Data
+    const dbUser = await prisma.user.findUnique({
+        where: { id: user.id },
+        include: {
+            series: {
+                include: {
+                    episodes: {
+                        orderBy: { createdAt: 'desc' },
+                        take: 3
+                    },
+                    channel: true
+                },
+                orderBy: { createdAt: 'desc' }
+            }
+        }
+    })
+
     if (dbUser && !dbUser.onboarded) redirect('/onboarding')
 
-    const [projects, channels] = await Promise.all([
-        prisma.videoProject.findMany({
-            where: { userId: user.id },
-            include: {
-                queueItems: { orderBy: { createdAt: 'desc' }, take: 1 },
-                finalVideos: { take: 1 },
-            },
-            orderBy: { createdAt: 'desc' },
-            take: 10,
-        }),
-        supabase.from('channels').select('*').eq('user_id', user.id).then(res => res.data),
-    ])
-
-    const pendingCount = projects.filter(p => p.queueItems[0]?.status === 'pending').length
-    const processingCount = projects.filter(p => p.queueItems[0]?.status === 'processing').length
-    const completeCount = projects.filter(p => p.status === 'ready' || p.queueItems[0]?.status === 'complete').length
+    const series = dbUser?.series || []
+    const totalEpisodes = series.reduce((acc, s) => acc + s.episodes.length, 0)
+    const activeSeriesCount = series.length
 
     return (
-        <div className="min-h-screen flex">
+        <div className="min-h-screen flex bg-[#09090b] text-[#fafafa]">
             {/* Sidebar */}
-            <aside className="w-64 border-r border-border flex flex-col p-6 shrink-0">
+            <aside className="w-64 border-r border-white/5 flex flex-col p-6 shrink-0 bg-[#09090b]">
                 <div className="mb-12">
                     <Logo size={36} showText={true} />
                 </div>
 
                 <nav className="flex flex-col gap-1 flex-1">
-                    <SidebarLink href="/dashboard" label="Dashboard" active />
-                    <SidebarLink href="/dashboard/generate" label="Generate" />
-                    <SidebarLink href="/dashboard/videos" label="Videos" />
+                    <SidebarLink href="/dashboard" label="Series Manager" active />
+                    <SidebarLink href="/dashboard/videos" label="All Episodes" />
                     <SidebarLink href="/dashboard/settings" label="Settings" />
                 </nav>
 
-                <div className="pt-6 border-t border-border">
+                <div className="pt-6 border-t border-white/5">
                     <div className="flex items-center gap-3 mb-4">
                         {user.user_metadata?.avatar_url && (
                             <img
                                 src={user.user_metadata.avatar_url}
                                 alt=""
-                                className="w-8 h-8 rounded-full"
+                                className="w-8 h-8 rounded-full border border-white/10"
                             />
                         )}
                         <div className="min-w-0">
                             <p className="text-sm font-medium truncate">
                                 {user.user_metadata?.full_name || 'User'}
                             </p>
-                            <p className="text-xs text-text-muted truncate">{user.email}</p>
+                            <p className="text-xs text-[#a1a1aa] truncate">{user.email}</p>
                         </div>
                     </div>
                     <SignOutButton />
@@ -77,104 +78,93 @@ export default async function Dashboard() {
             <main className="flex-1 p-10 overflow-y-auto">
                 <header className="flex items-center justify-between mb-10">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-                        <p className="text-text-secondary text-sm mt-1">
-                            Overview of your video generation pipeline.
+                        <h1 className="text-3xl font-bold tracking-tight">Your Factory</h1>
+                        <p className="text-[#a1a1aa] text-sm mt-1">
+                            Manage and scale your content series.
                         </p>
                     </div>
-                    <Link href="/dashboard/generate" className="btn-primary">
-                        Generate now
+                    <Link href="/dashboard/new" className="px-6 py-2.5 bg-white text-black text-sm font-bold rounded-xl hover:bg-zinc-200 transition-colors">
+                        New Series
                     </Link>
                 </header>
 
-                {/* Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-10">
-                    <StatCard label="Total projects" value={projects.length} />
-                    <StatCard label="Pending" value={pendingCount} variant="warning" />
-                    <StatCard label="Processing" value={processingCount} variant="processing" />
-                    <StatCard label="Complete" value={completeCount} variant="success" />
-                </div>
-
-                {/* Queue */}
-                <section>
-                    <h2 className="text-lg font-semibold mb-4">Recent activity</h2>
-                    <div className="border border-border rounded-2xl overflow-hidden">
-                        {projects.length === 0 ? (
-                            <div className="p-12 text-center">
-                                <p className="text-text-secondary text-sm">
-                                    No projects yet. Create your first video to get started.
-                                </p>
-                            </div>
-                        ) : (
-                            <table className="w-full text-sm">
-                                <thead>
-                                    <tr className="border-b border-border text-text-muted text-xs uppercase tracking-wider">
-                                        <th className="text-left p-4 font-medium">Topic</th>
-                                        <th className="text-left p-4 font-medium">Duration</th>
-                                        <th className="text-left p-4 font-medium">Status</th>
-                                        <th className="text-left p-4 font-medium">Created</th>
-                                        <th className="text-right p-4 font-medium"></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {projects.map(p => {
-                                        const queueStatus = p.queueItems[0]?.status || p.status
-                                        const hasVideo = p.finalVideos.length > 0
-                                        return (
-                                            <tr key={p.id} className="border-b border-border last:border-b-0 hover:bg-white/[0.02] transition-colors">
-                                                <td className="p-4 font-medium">{p.topic}</td>
-                                                <td className="p-4 text-text-secondary">{(p as any).duration}s</td>
-                                                <td className="p-4">
-                                                    <StatusBadge status={queueStatus} />
-                                                </td>
-                                                <td className="p-4 text-text-secondary">
-                                                    {new Date(p.createdAt).toLocaleDateString('en-US', {
-                                                        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-                                                    })}
-                                                </td>
-                                                <td className="p-4 text-right">
-                                                    {hasVideo && (
-                                                        <Link
-                                                            href={`/dashboard/videos/${p.id}`}
-                                                            className="text-primary text-xs font-medium hover:underline"
-                                                        >
-                                                            Review
-                                                        </Link>
-                                                    )}
-                                                </td>
-                                            </tr>
-                                        )
-                                    })}
-                                </tbody>
-                            </table>
-                        )}
-                    </div>
-                </section>
-
-                {/* Connected channels */}
-                <section className="mt-10">
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-lg font-semibold">Connected channels</h2>
-                        <Link href="/dashboard/settings" className="text-xs text-text-secondary hover:text-text-primary transition-colors">
-                            Manage
+                {/* Main Content */}
+                {series.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center p-20 glass-card rounded-3xl border-dashed border-2 border-white/5">
+                        <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-6">
+                            <PlusIcon className="w-8 h-8 text-white/20" />
+                        </div>
+                        <h3 className="text-xl font-bold mb-2">Build your first series</h3>
+                        <p className="text-[#a1a1aa] text-sm text-center max-w-xs mb-8">
+                            Create a project with a niche and tone to start generating high-retention content.
+                        </p>
+                        <Link href="/dashboard/new" className="btn-primary">
+                            Get Started
                         </Link>
                     </div>
-                    <div className="flex gap-3">
-                        {channels && channels.length > 0 ? (
-                            channels.map((ch: any) => (
-                                <div key={ch.id} className="glass-card flex items-center gap-3 px-5 py-3">
-                                    <div className="w-2 h-2 rounded-full bg-success" />
-                                    <span className="text-sm font-medium">{ch.channel_name}</span>
-                                    <span className="text-xs text-text-muted capitalize">{ch.platform}</span>
+                ) : (
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                        {series.map(s => (
+                            <div key={s.id} className="p-8 glass-card border border-white/5 rounded-3xl hover:border-white/10 transition-all flex flex-col group">
+                                <div className="flex items-start justify-between mb-6">
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <span className="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 text-[10px] font-bold uppercase tracking-wider border border-blue-500/20">
+                                                {s.niche}
+                                            </span>
+                                            <span className="px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 text-[10px] font-bold uppercase tracking-wider border border-purple-500/20">
+                                                {s.platform}
+                                            </span>
+                                        </div>
+                                        <h2 className="text-2xl font-bold tracking-tight group-hover:text-blue-400 transition-colors">{s.name}</h2>
+                                        <p className="text-[#a1a1aa] text-sm mt-1">{s.tone} • {s.duration}s episodes</p>
+                                    </div>
+                                    <Link
+                                        href={`/dashboard/generate?seriesId=${s.id}`}
+                                        className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white hover:text-black transition-all group/btn"
+                                    >
+                                        <PlayFillIcon className="w-5 h-5" />
+                                    </Link>
                                 </div>
-                            ))
-                        ) : (
-                            <div className="glass-card px-5 py-3">
-                                <p className="text-sm text-text-secondary">No channels connected yet.</p>
+
+                                {/* Recent Episodes */}
+                                <div className="flex-1 space-y-3">
+                                    <p className="text-[10px] font-bold text-[#52525b] uppercase tracking-widest ml-1">Recent Episodes</p>
+                                    {s.episodes.length > 0 ? (
+                                        s.episodes.map(ep => (
+                                            <div key={ep.id} className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">
+                                                        <VideoIcon className="w-4 h-4 text-[#a1a1aa]" />
+                                                    </div>
+                                                    <span className="text-sm font-medium truncate max-w-[140px]">{ep.topic}</span>
+                                                </div>
+                                                <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-md ${ep.status === 'ready' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'
+                                                    }`}>
+                                                    {ep.status}
+                                                </span>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="py-8 text-center bg-white/[0.01] rounded-2xl border border-dashed border-white/5">
+                                            <p className="text-xs text-[#52525b]">No episodes generated yet</p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-2 h-2 rounded-full bg-blue-500" />
+                                        <span className="text-xs text-[#a1a1aa] font-medium">{s.episodes.length} Episodes</span>
+                                    </div>
+                                    <Link href={`/dashboard/series/${s.id}`} className="text-xs font-bold text-white/40 hover:text-white transition-colors">
+                                        View Settings →
+                                    </Link>
+                                </div>
                             </div>
-                        )}
+                        ))}
                     </div>
-                </section>
+                )}
             </main>
         </div>
     )
@@ -184,10 +174,12 @@ function SidebarLink({ href, label, active = false }: { href: string; label: str
     return (
         <Link
             href={href}
-            className="px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+            className="px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
             style={{
-                background: active ? 'rgba(59,130,246,0.08)' : 'transparent',
-                color: active ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                background: active ? 'rgba(255,255,255,0.05)' : 'transparent',
+                color: active ? '#fafafa' : '#a1a1aa',
+                boxShadow: active ? 'inset 0 0 10px rgba(255,255,255,0.02)' : 'none',
+                border: active ? '1px border border-white/5' : '1px border border-transparent'
             }}
         >
             {label}
@@ -195,29 +187,15 @@ function SidebarLink({ href, label, active = false }: { href: string; label: str
     )
 }
 
-function StatCard({ label, value, variant }: { label: string; value: number; variant?: string }) {
-    const dotColor = variant === 'warning' ? 'bg-warning'
-        : variant === 'processing' ? 'bg-secondary'
-            : variant === 'success' ? 'bg-success'
-                : 'bg-text-muted'
-
-    return (
-        <div className="glass-card">
-            <p className="text-xs text-text-muted mb-2 uppercase tracking-wider font-medium">{label}</p>
-            <div className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full ${dotColor}`} />
-                <p className="text-2xl font-bold tracking-tight">{value}</p>
-            </div>
-        </div>
-    )
+// Icons
+function PlusIcon({ className }: { className?: string }) {
+    return <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
 }
 
-function StatusBadge({ status }: { status: string }) {
-    const cls = status === 'pending' ? 'status-badge status-pending'
-        : status === 'processing' ? 'status-badge status-processing'
-            : status === 'complete' || status === 'ready' ? 'status-badge status-complete'
-                : status === 'failed' ? 'status-badge status-failed'
-                    : 'status-badge'
+function PlayFillIcon({ className }: { className?: string }) {
+    return <svg className={className} fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+}
 
-    return <span className={cls}>{status}</span>
+function VideoIcon({ className }: { className?: string }) {
+    return <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
 }
