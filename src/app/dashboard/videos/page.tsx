@@ -33,11 +33,34 @@ export default function VideosPage() {
     }, [])
 
     const completedVideos = projects.filter(p =>
-        p.finalVideos.length > 0 || p.queueItems[0]?.status === 'complete' || p.status === 'ready'
+        p.finalVideos.length > 0 || p.status === 'ready' || (p.queueItems && p.queueItems[0]?.status === 'complete')
     )
     const inProgress = projects.filter(p =>
-        p.queueItems[0]?.status === 'pending' || p.queueItems[0]?.status === 'processing' || p.status === 'generating'
+        p.status === 'generating' || (p.queueItems && (p.queueItems[0]?.status === 'pending' || p.queueItems[0]?.status === 'processing'))
     )
+
+    const handleDelete = async (id: string) => {
+        if (!confirm('Are you sure you want to delete this episode?')) return
+        try {
+            const res = await fetch(`/api/jobs/${id}`, { method: 'DELETE' })
+            if (res.ok) setProjects(projects.filter(p => p.id !== id))
+        } catch (error) {
+            console.error(error)
+        }
+    }
+
+    const handleRetry = async (id: string) => {
+        try {
+            const res = await fetch(`/api/jobs/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'retry' }),
+            })
+            if (res.ok) fetchVideos()
+        } catch (error) {
+            console.error(error)
+        }
+    }
 
     return (
         <div className="min-h-screen flex bg-[#09090b] text-[#fafafa]">
@@ -82,6 +105,12 @@ export default function VideosPage() {
                                     <div className="flex items-center gap-6">
                                         <StatusBadge status={p.queueItems[0]?.status || p.status} />
                                         <ProgressIndicator duration={p.duration} createdAt={p.createdAt} />
+                                        <button
+                                            onClick={() => handleDelete(p.id)}
+                                            className="text-[10px] text-rose-500 font-bold uppercase tracking-widest opacity-0 hover:opacity-100 transition-opacity"
+                                        >
+                                            Cancel
+                                        </button>
                                     </div>
                                 </div>
                             ))}
@@ -106,8 +135,10 @@ export default function VideosPage() {
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                             {completedVideos.map(p => (
-                                <Link key={p.id} href={`/dashboard/videos/${p.id}`} className="group p-4 bg-white/[0.02] border border-white/5 rounded-3xl hover:border-white/20 transition-all flex flex-col">
-                                    <div className="w-full aspect-[9/16] max-h-56 rounded-2xl bg-black mb-4 flex items-center justify-center overflow-hidden border border-white/5 relative">
+                                <div key={p.id} className="group p-4 bg-white/[0.02] border border-white/5 rounded-3xl hover:border-white/20 transition-all flex flex-col relative">
+                                    <Link href={`/dashboard/videos/${p.id}`} className="absolute inset-0 z-0" />
+
+                                    <div className="w-full aspect-[9/16] max-h-56 rounded-2xl bg-black mb-4 flex items-center justify-center overflow-hidden border border-white/5 relative z-10">
                                         {p.finalVideos[0]?.storageUrl ? (
                                             <video
                                                 src={p.finalVideos[0].storageUrl}
@@ -119,21 +150,32 @@ export default function VideosPage() {
                                             <span className="text-[10px] uppercase font-black tracking-[0.2em] text-[#52525b]">Awaiting Feed</span>
                                         )}
                                         <div className="absolute top-2 right-2 px-2 py-1 rounded-lg bg-black/60 backdrop-blur-md text-[10px] font-bold text-emerald-400 border border-emerald-500/20">
-                                            READY
+                                            {p.status === 'ready' ? 'READY' : p.status.toUpperCase()}
                                         </div>
                                     </div>
-                                    <div className="px-2 pb-2">
+                                    <div className="px-2 pb-2 relative z-10">
                                         <p className="text-sm font-bold line-clamp-1 group-hover:text-blue-400 transition-colors uppercase italic tracking-tight">{p.topic}</p>
                                         <div className="flex items-center justify-between mt-3">
                                             <span className="text-[10px] text-[#52525b] font-black uppercase tracking-widest">
                                                 {p.series?.name || 'NO SERIES'}
                                             </span>
-                                            <span className="text-[10px] text-[#52525b] font-bold">
-                                                {new Date(p.createdAt).toLocaleDateString()}
-                                            </span>
+                                            <div className="flex items-center gap-3">
+                                                <button
+                                                    onClick={(e) => { e.preventDefault(); handleRetry(p.id); }}
+                                                    className="text-[10px] text-blue-500 font-bold uppercase hover:underline"
+                                                >
+                                                    Retry
+                                                </button>
+                                                <button
+                                                    onClick={(e) => { e.preventDefault(); handleDelete(p.id); }}
+                                                    className="text-[10px] text-rose-500 font-bold uppercase hover:underline"
+                                                >
+                                                    Delete
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
-                                </Link>
+                                </div>
                             ))}
                         </div>
                     )}
@@ -168,8 +210,8 @@ function StatusBadge({ status }: { status: string }) {
 
     return (
         <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${isError ? 'bg-rose-500/10 text-rose-500'
-                : isComplete ? 'bg-emerald-500/10 text-emerald-500'
-                    : 'bg-amber-500/10 text-amber-500'
+            : isComplete ? 'bg-emerald-500/10 text-emerald-500'
+                : 'bg-amber-500/10 text-amber-500'
             }`}>
             {status}
         </span>

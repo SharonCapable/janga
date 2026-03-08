@@ -16,7 +16,11 @@ export async function GET(request: Request) {
         const nextJob = await prisma.generationQueue.findFirst({
             where: { status: 'pending' },
             orderBy: { priority: 'desc' },
-            include: { project: true }
+            include: {
+                project: {
+                    include: { series: true }
+                }
+            }
         });
 
         return NextResponse.json(nextJob);
