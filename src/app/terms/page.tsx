@@ -37,6 +37,9 @@ export default function TermsOfService() {
 
                     <section>
                         <h2 className="text-2xl font-semibold mb-4 text-white">3. User Responsibilities</h2>
+                        <p className="text-zinc-400">
+                            If you have any questions about these Terms, please contact us at: <strong>senyonam557@gmail.com</strong>
+                        </p>
                         <p className="text-[#a1a1aa] leading-relaxed mb-4">
                             As a user of Janga, you agree that you will not:
                         </p>

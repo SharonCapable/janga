@@ -70,8 +70,8 @@ export default function PrivacyPolicy() {
 
                     <section>
                         <h2 className="text-2xl font-semibold mb-4 text-white">6. Contact Us</h2>
-                        <p className="text-[#a1a1aa] leading-relaxed">
-                            If you have any questions about this Privacy Policy, please contact us at support@janga.site.
+                        <p className="text-zinc-400">
+                            If you have any questions about this Privacy Policy, please contact us at: <strong>senyonam557@gmail.com</strong>
                         </p>
                     </section>
                 </div>
