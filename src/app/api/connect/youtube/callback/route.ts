@@ -1,0 +1,89 @@
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+import { NextResponse } from 'next/server';
+
+export async function GET(request: Request) {
+    const { searchParams, origin } = new URL(request.url);
+    const code = searchParams.get('code');
+    const error = searchParams.get('error');
+
+    if (error || !code) {
+        return NextResponse.redirect(`${origin}/dashboard?error=youtube_denied`);
+    }
+
+    try {
+        // 1. Exchange code for tokens
+        const response = await fetch('https://oauth2.googleapis.com/token', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                client_id: process.env.YOUTUBE_CLIENT_ID!,
+                client_secret: process.env.YOUTUBE_CLIENT_SECRET!,
+                code,
+                grant_type: 'authorization_code',
+                redirect_uri: process.env.YOUTUBE_REDIRECT_URI!,
+            }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            console.error('YouTube Token Error:', data);
+            return NextResponse.redirect(`${origin}/dashboard?error=youtube_token_failed`);
+        }
+
+        const { access_token, refresh_token } = data;
+
+        // 2. Get YouTube Channel Info
+        const channelResponse = await fetch('https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true', {
+            headers: {
+                Authorization: `Bearer ${access_token}`,
+            },
+        });
+        const channelData = await channelResponse.json();
+        const channelName = channelData?.items?.[0]?.snippet?.title || 'YouTube Channel';
+
+        // 3. Save to Supabase
+        const cookieStore = await cookies();
+        const supabase = createServerClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+            {
+                cookies: {
+                    getAll() {
+                        return cookieStore.getAll();
+                    },
+                },
+            }
+        );
+
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            return NextResponse.redirect(`${origin}/login`);
+        }
+
+        const { error: dbError } = await supabase
+            .from('channels')
+            .insert({
+                user_id: user.id,
+                platform: 'youtube',
+                channel_name: channelName,
+                oauth_token: access_token, // In production, encrypt this!
+                refresh_token: refresh_token,
+                connected_at: new Date().toISOString(),
+            });
+
+        if (dbError) {
+            console.error('Supabase Error:', dbError);
+            return NextResponse.redirect(`${origin}/dashboard?error=db_save_failed`);
+        }
+
+        return NextResponse.redirect(`${origin}/dashboard?success=youtube_connected`);
+    } catch (err) {
+        console.error('YouTube Connection Error:', err);
+        return NextResponse.redirect(`${origin}/dashboard?error=server_error`);
+    }
+}

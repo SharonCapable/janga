@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Janga — System Architecture</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0e1a;
+            --surface: #111827;
+            --surface2: #1a2235;
+            --border: #1e2d45;
+            --gcp-blue: #4285f4;
+            --gcp-green: #34a853;
+            --gcp-yellow: #fbbc04;
+            --gcp-red: #ea4335;
+            --accent: #00d4ff;
+            --accent2: #7c3aed;
+            --text: #e2e8f0;
+            --muted: #64748b;
+            --gpu-color: #f59e0b;
+            --cpu-color: #10b981;
+            --storage-color: #3b82f6;
+            --app-color: #8b5cf6;
+            --worker-color: #ec4899;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Syne', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Background grid */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(66, 133, 244, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(66, 133, 244, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+        }
+
+        header {
+            padding: 2rem 3rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+            position: relative;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--muted);
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            margin-top: 0.2rem;
+        }
+
+        .badge {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.65rem;
+            padding: 0.3rem 0.8rem;
+            border-radius: 2px;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            letter-spacing: 0.1em;
+        }
+
+        .diagram {
+            padding: 3rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Flow label */
+        .flow-label {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.6rem;
+            color: var(--muted);
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .flow-label::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        /* Main layout */
+        .arch-grid {
+            display: grid;
+            grid-template-columns: 220px 1fr 220px;
+            grid-template-rows: auto auto auto;
+            gap: 0;
+            position: relative;
+        }
+
+        /* Zone containers */
+        .zone {
+            border-radius: 8px;
+            padding: 1.5rem;
+            position: relative;
+        }
+
+        .zone-label {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.55rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .zone-label::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        /* Node cards */
+        .node {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1.2rem;
+            position: relative;
+            transition: all 0.2s ease;
+            cursor: default;
+        }
+
+        .node:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .node-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .node-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            margin-bottom: 0.3rem;
+        }
+
+        .node-desc {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.6rem;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .node-tag {
+            display: inline-block;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.55rem;
+            padding: 0.15rem 0.4rem;
+            border-radius: 2px;
+            margin-top: 0.6rem;
+            letter-spacing: 0.05em;
+        }
+
+        /* Color variants */
+        .gpu {
+            border-color: rgba(245, 158, 11, 0.3);
+        }
+
+        .gpu .node-icon {
+            background: rgba(245, 158, 11, 0.1);
+        }
+
+        .gpu .node-tag {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--gpu-color);
+        }
+
+        .gpu:hover {
+            border-color: rgba(245, 158, 11, 0.6);
+            box-shadow: 0 8px 32px rgba(245, 158, 11, 0.1);
+        }
+
+        .cpu {
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        .cpu .node-icon {
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .cpu .node-tag {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--cpu-color);
+        }
+
+        .cpu:hover {
+            border-color: rgba(16, 185, 129, 0.6);
+            box-shadow: 0 8px 32px rgba(16, 185, 129, 0.1);
+        }
+
+        .storage-node {
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+
+        .storage-node .node-icon {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .storage-node .node-tag {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--storage-color);
+        }
+
+        .storage-node:hover {
+            border-color: rgba(59, 130, 246, 0.6);
+            box-shadow: 0 8px 32px rgba(59, 130, 246, 0.1);
+        }
+
+        .app-node {
+            border-color: rgba(139, 92, 246, 0.3);
+        }
+
+        .app-node .node-icon {
+            background: rgba(139, 92, 246, 0.1);
+        }
+
+        .app-node .node-tag {
+            background: rgba(139, 92, 246, 0.1);
+            color: var(--app-color);
+        }
+
+        .app-node:hover {
+            border-color: rgba(139, 92, 246, 0.6);
+            box-shadow: 0 8px 32px rgba(139, 92, 246, 0.1);
+        }
+
+        .worker-node {
+            border-color: rgba(236, 72, 153, 0.3);
+        }
+
+        .worker-node .node-icon {
+            background: rgba(236, 72, 153, 0.1);
+        }
+
+        .worker-node .node-tag {
+            background: rgba(236, 72, 153, 0.1);
+            color: var(--worker-color);
+        }
+
+        .worker-node:hover {
+            border-color: rgba(236, 72, 153, 0.6);
+            box-shadow: 0 8px 32px rgba(236, 72, 153, 0.1);
+        }
+
+        /* GCP Zone wrapper */
+        .gcp-zone {
+            grid-column: 1 / -1;
+            border: 1px dashed rgba(66, 133, 244, 0.2);
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 1.5rem 0;
+            position: relative;
+        }
+
+        .gcp-zone-label {
+            position: absolute;
+            top: -0.7rem;
+            left: 1.5rem;
+            background: var(--bg);
+            padding: 0 0.5rem;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.6rem;
+            color: var(--gcp-blue);
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .gcp-inner {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1.5rem;
+            align-items: start;
+        }
+
+        /* VM boxes */
+        .vm-box {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.2rem;
+            background: var(--surface2);
+        }
+
+        .vm-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.8rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .vm-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.4;
+            }
+        }
+
+        .vm-name {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+
+        .vm-spec {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.55rem;
+            color: var(--muted);
+        }
+
+        /* Top row — User + App */
+        .top-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 0;
+            align-items: center;
+        }
+
+        /* Arrow connectors */
+        .arrows-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1.5rem;
+            padding: 0.5rem 0;
+            align-items: center;
+        }
+
+        .arrow-down {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.2rem;
+        }
+
+        .arrow-line {
+            width: 1px;
+            height: 30px;
+            position: relative;
+        }
+
+        .arrow-line::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .arrow-label {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.55rem;
+            color: var(--muted);
+            text-align: center;
+            letter-spacing: 0.05em;
+        }
+
+        /* Bottom row */
+        .bottom-row {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        /* Horizontal flow */
+        .h-flow {
+            display: flex;
+            align-items: center;
+            gap: 0;
+        }
+
+        .h-arrow {
+            flex: 1;
+            height: 1px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .h-arrow::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 1px;
+        }
+
+        .h-arrow-label {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.5rem;
+            padding: 0.2rem 0.4rem;
+            border-radius: 2px;
+            white-space: nowrap;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Pipeline steps */
+        .pipeline {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            margin-top: 1.5rem;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+        }
+
+        .pipeline-step {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.8rem 1rem;
+            flex-shrink: 0;
+            text-align: center;
+            min-width: 110px;
+        }
+
+        .step-num {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.5rem;
+            color: var(--muted);
+            margin-bottom: 0.3rem;
+        }
+
+        .step-name {
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .step-tool {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.55rem;
+            margin-top: 0.3rem;
+        }
+
+        .pipe-arrow {
+            width: 30px;
+            height: 1px;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .pipe-arrow::after {
+            content: '▶';
+            position: absolute;
+            right: -4px;
+            top: -6px;
+            font-size: 0.5rem;
+        }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            gap: 2rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.6rem;
+            color: var(--muted);
+        }
+
+        .legend-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        /* SVG arrows overlay */
+        .connections {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        /* Status pills */
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.55rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 20px;
+            margin-top: 0.5rem;
+        }
+
+        .status-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        .parallel-badge {
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            color: var(--accent);
+            font-family: 'Space Mono', monospace;
+            font-size: 0.55rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 2px;
+            letter-spacing: 0.05em;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .gcp-inner {
+                grid-template-columns: 1fr;
+            }
+
+            .top-row {
+                grid-template-columns: 1fr;
+            }
+
+            .diagram {
+                padding: 1.5rem;
+            }
+
+            header {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div>
+            <div class="logo">Janga</div>
+            <div class="subtitle">System Architecture v1.0 — Video Generation Pipeline</div>
+        </div>
+        <div class="badge">GCP · us-central1-a</div>
+    </header>
+
+    <div class="diagram">
+
+        <!-- TOP ROW: User + Next.js App -->
+        <div class="flow-label">Entry Points</div>
+        <div class="top-row">
+            <div class="node app-node">
+                <div class="node-icon">👤</div>
+                <div class="node-title">End User</div>
+                <div class="node-desc">Submits video request<br>niche · tone · duration</div>
+                <div class="node-tag">Browser / Mobile</div>
+            </div>
+
+            <div style="display:flex;align-items:center;justify-content:center;gap:0.5rem;">
+                <div style="flex:1;height:1px;background:linear-gradient(90deg, transparent, #4285f4);"></div>
+                <div
+                    style="font-family:'Space Mono',monospace;font-size:0.55rem;color:#4285f4;padding:0.2rem 0.6rem;border:1px solid rgba(66,133,244,0.3);border-radius:2px;">
+                    HTTPS Request</div>
+                <div style="flex:1;height:1px;background:linear-gradient(90deg, #4285f4, transparent);"></div>
+            </div>
+
+            <div class="node app-node">
+                <div class="node-icon">⚡</div>
+                <div class="node-title">Next.js App</div>
+                <div class="node-desc">Web frontend + API routes<br>Auth · Job queue · UI</div>
+                <div class="node-tag">Vercel / GCP · Port 3000</div>
+                <div class="status-pill" style="background:rgba(139,92,246,0.1);color:#8b5cf6;">
+                    <div class="status-dot" style="background:#8b5cf6;"></div>
+                    Supabase · PostgreSQL
+                </div>
+            </div>
+        </div>
+
+        <!-- GCP Zone -->
+        <div class="gcp-zone" style="margin-top:1.5rem;">
+            <div class="gcp-zone-label">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="#4285f4" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                Google Cloud Platform — Project: janga-vast-487821
+            </div>
+
+            <div class="gcp-inner">
+
+                <!-- Orchestrator VM -->
+                <div class="vm-box">
+                    <div class="vm-header">
+                        <div class="vm-dot" style="background: var(--cpu-color);"></div>
+                        <div>
+                            <div class="vm-name">videogen-orchestrator</div>
+                            <div class="vm-spec">e2-standard-2 · 10.128.0.2 · CPU only</div>
+                        </div>
+                    </div>
+
+                    <div class="node cpu" style="margin-bottom:1rem;">
+                        <div class="node-icon">🎙️</div>
+                        <div class="node-title">TTS Service</div>
+                        <div class="node-desc">Google Cloud TTS<br>en-US-Journey-F voice<br>FastAPI · Port 8081</div>
+                        <div class="node-tag">systemd · auto-restart</div>
+                    </div>
+
+                    <div class="node worker-node">
+                        <div class="node-icon">⚙️</div>
+                        <div class="node-title">Worker</div>
+                        <div class="node-desc">Job orchestration<br>Gemini script gen<br>FFmpeg stitching</div>
+                        <div class="node-tag">worker.py · polling</div>
+                        <div class="parallel-badge" style="display:inline-block;margin-top:0.5rem;">⚡ parallel TTS +
+                            video</div>
+                    </div>
+                </div>
+
+                <!-- Center: GCS + Flow -->
+                <div style="display:flex;flex-direction:column;gap:1rem;align-items:center;">
+
+                    <div
+                        style="font-family:'Space Mono',monospace;font-size:0.55rem;color:var(--muted);text-align:center;letter-spacing:0.1em;text-transform:uppercase;">
+                        Job Queue (Supabase)</div>
+                    <div style="width:1px;height:20px;background:linear-gradient(180deg,#8b5cf6,#ec4899);"></div>
+
+                    <div class="node storage-node" style="width:100%;">
+                        <div class="node-icon">🗄️</div>
+                        <div class="node-title">Cloud Storage</div>
+                        <div class="node-desc">videogen-out-1771487929</div>
+                        <div style="margin-top:0.8rem;display:flex;flex-direction:column;gap:0.3rem;">
+                            <div
+                                style="font-family:'Space Mono',monospace;font-size:0.55rem;padding:0.2rem 0.5rem;background:rgba(59,130,246,0.08);border-radius:3px;color:#60a5fa;">
+                                📁 audio/ — TTS files</div>
+                            <div
+                                style="font-family:'Space Mono',monospace;font-size:0.55rem;padding:0.2rem 0.5rem;background:rgba(59,130,246,0.08);border-radius:3px;color:#60a5fa;">
+                                📁 clips/ — CogVideoX</div>
+                            <div
+                                style="font-family:'Space Mono',monospace;font-size:0.55rem;padding:0.2rem 0.5rem;background:rgba(59,130,246,0.08);border-radius:3px;color:#60a5fa;">
+                                📁 final/ — Stitched</div>
+                        </div>
+                        <div class="node-tag">Signed URLs · 1hr expiry</div>
+                        <div class="node-tag"
+                            style="background:rgba(59,130,246,0.08);color:#60a5fa;margin-left:0.3rem;">Auto-delete 24h
+                        </div>
+                    </div>
+
+                    <div style="width:1px;height:20px;background:linear-gradient(180deg,#3b82f6,#00d4ff);"></div>
+                    <div
+                        style="font-family:'Space Mono',monospace;font-size:0.55rem;color:var(--muted);text-align:center;letter-spacing:0.1em;text-transform:uppercase;">
+                        Signed URL returned</div>
+                </div>
+
+                <!-- GPU VM -->
+                <div class="vm-box">
+                    <div class="vm-header">
+                        <div class="vm-dot" style="background: var(--gpu-color);"></div>
+                        <div>
+                            <div class="vm-name">cogvideox-prod</div>
+                            <div class="vm-spec">g2-standard-8 · 10.128.0.3 · NVIDIA L4 24GB</div>
+                        </div>
+                    </div>
+
+                    <div class="node gpu">
+                        <div class="node-icon">🎬</div>
+                        <div class="node-title">CogVideoX-2B</div>
+                        <div class="node-desc">Text-to-video model<br>6s clips · bfloat16<br>FastAPI · Port 8080</div>
+                        <div class="node-tag">systemd · auto-restart</div>
+                        <div class="status-pill" style="background:rgba(245,158,11,0.1);color:#f59e0b;">
+                            <div class="status-dot" style="background:#f59e0b;"></div>
+                            ~4.5 min / clip
+                        </div>
+                    </div>
+
+                    <div
+                        style="margin-top:1rem;padding:0.8rem;background:rgba(245,158,11,0.05);border:1px solid rgba(245,158,11,0.15);border-radius:6px;">
+                        <div
+                            style="font-family:'Space Mono',monospace;font-size:0.55rem;color:var(--muted);margin-bottom:0.4rem;">
+                            VRAM USAGE</div>
+                        <div style="background:var(--border);border-radius:2px;height:6px;overflow:hidden;">
+                            <div
+                                style="width:90%;height:100%;background:linear-gradient(90deg,#f59e0b,#ef4444);border-radius:2px;">
+                            </div>
+                        </div>
+                        <div
+                            style="font-family:'Space Mono',monospace;font-size:0.5rem;color:#f59e0b;margin-top:0.3rem;">
+                            ~21GB / 24GB</div>
+                    </div>
+                </div>
+
+            </div><!-- end gcp-inner -->
+        </div><!-- end gcp-zone -->
+
+        <!-- Pipeline flow -->
+        <div class="flow-label" style="margin-top:2rem;">Generation Pipeline</div>
+        <div class="pipeline">
+
+            <div class="pipeline-step" style="border-color:rgba(139,92,246,0.3);">
+                <div class="step-num">01</div>
+                <div class="step-name" style="color:#8b5cf6;">Job Queue</div>
+                <div class="step-tool" style="color:#8b5cf6;">Supabase</div>
+            </div>
+
+            <div class="pipe-arrow" style="background:rgba(139,92,246,0.4);color:#8b5cf6;"></div>
+
+            <div class="pipeline-step" style="border-color:rgba(16,185,129,0.3);">
+                <div class="step-num">02</div>
+                <div class="step-name" style="color:#10b981;">Script Gen</div>
+                <div class="step-tool" style="color:#10b981;">Gemini 2.0</div>
+            </div>
+
+            <div class="pipe-arrow" style="background:rgba(16,185,129,0.4);color:#10b981;"></div>
+
+            <div class="pipeline-step" style="border-color:rgba(0,212,255,0.3);position:relative;">
+                <div class="step-num">03 + 04</div>
+                <div class="step-name" style="color:#00d4ff;">Parallel</div>
+                <div class="step-tool" style="color:#00d4ff;">TTS + Video</div>
+                <div
+                    style="position:absolute;top:-8px;right:-8px;background:#00d4ff;color:#0a0e1a;font-family:'Space Mono',monospace;font-size:0.45rem;padding:0.1rem 0.3rem;border-radius:2px;">
+                    ⚡</div>
+            </div>
+
+            <div class="pipe-arrow" style="background:rgba(0,212,255,0.4);color:#00d4ff;"></div>
+
+            <div class="pipeline-step" style="border-color:rgba(236,72,153,0.3);">
+                <div class="step-num">05</div>
+                <div class="step-name" style="color:#ec4899;">FFmpeg</div>
+                <div class="step-tool" style="color:#ec4899;">Stitch + Merge</div>
+            </div>
+
+            <div class="pipe-arrow" style="background:rgba(236,72,153,0.4);color:#ec4899;"></div>
+
+            <div class="pipeline-step" style="border-color:rgba(59,130,246,0.3);">
+                <div class="step-num">06</div>
+                <div class="step-name" style="color:#3b82f6;">Upload</div>
+                <div class="step-tool" style="color:#3b82f6;">GCS final/</div>
+            </div>
+
+            <div class="pipe-arrow" style="background:rgba(59,130,246,0.4);color:#3b82f6;"></div>
+
+            <div class="pipeline-step" style="border-color:rgba(139,92,246,0.3);">
+                <div class="step-num">07</div>
+                <div class="step-name" style="color:#8b5cf6;">Complete</div>
+                <div class="step-tool" style="color:#8b5cf6;">Signed URL</div>
+            </div>
+
+            <div class="pipe-arrow" style="background:rgba(139,92,246,0.4);color:#8b5cf6;"></div>
+
+            <div class="pipeline-step" style="border-color:rgba(251,191,4,0.3);">
+                <div class="step-num">08</div>
+                <div class="step-name" style="color:#fbbc04;">Post</div>
+                <div class="step-tool" style="color:#fbbc04;">TikTok / YT</div>
+            </div>
+
+        </div>
+
+        <!-- Legend -->
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-dot" style="background:var(--gpu-color);"></div>GPU VM (NVIDIA L4)
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot" style="background:var(--cpu-color);"></div>CPU VM (Orchestrator)
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot" style="background:var(--storage-color);"></div>Cloud Storage (GCS)
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot" style="background:var(--app-color);"></div>Web Application
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot" style="background:var(--worker-color);"></div>Worker / Pipeline
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot" style="background:var(--accent);"></div>Parallel Execution
+            </div>
+        </div>
+
+    </div><!-- end diagram -->
+
+</body>
+
+</html>

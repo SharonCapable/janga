@@ -1,0 +1,125 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String          @id @default(cuid())
+  email            String?         @unique
+  name             String?
+  image            String?
+  createdAt        DateTime        @default(now()) @map("created_at")
+  subscriptionTier String          @default("free") @map("subscription_tier")
+  onboarded        Boolean         @default(false)
+  defaultNiche     String?         @map("default_niche")
+  defaultTone      String?         @map("default_tone")
+  channels         Channel[]
+  projects         VideoProject[]
+  accounts         Account[]
+  sessions         Session[]
+
+  @@map("users")
+}
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String  @map("user_id")
+  type               String
+  provider           String
+  providerAccountId  String  @map("provider_account_id")
+  refresh_token      String? @db.Text
+  access_token       String? @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String? @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model Channel {
+  id           String         @id @default(cuid())
+  userId       String         @map("user_id")
+  user         User           @relation(fields: [userId], references: [id])
+  platform     String         // tiktok, youtube
+  channelName  String         @map("channel_name")
+  oauthToken   String         @map("oauth_token") // encrypted
+  refreshToken String?        @map("refresh_token")
+  connectedAt  DateTime       @default(now()) @map("connected_at")
+  projects     VideoProject[]
+
+  @@map("channels")
+}
+
+model VideoProject {
+  id                String           @id @default(cuid())
+  userId            String           @map("user_id")
+  user              User             @relation(fields: [userId], references: [id])
+  channelId         String?          @map("channel_id")
+  channel           Channel?         @relation(fields: [channelId], references: [id])
+  topic             String
+  modelVersion      String           @default("cogvideox-5b") @map("model_version")
+  duration          Int              @default(60)
+  status            String           @default("draft") // draft, generating, ready, posted
+  scheduledPostTime DateTime?        @map("scheduled_post_time")
+  createdAt         DateTime         @default(now()) @map("created_at")
+  clips             GeneratedClip[]
+  finalVideos       FinalVideo[]
+  queueItems        GenerationQueue[]
+
+  @@map("video_projects")
+}
+
+model GeneratedClip {
+  id         String       @id @default(cuid())
+  projectId  String       @map("project_id")
+  project    VideoProject @relation(fields: [projectId], references: [id])
+  clipNumber Int          @map("clip_number")
+  promptUsed String       @map("prompt_used")
+  storageUrl String       @map("storage_url")
+  duration   Float
+
+  @@map("generated_clips")
+}
+
+model FinalVideo {
+  id              String       @id @default(cuid())
+  projectId       String       @map("project_id")
+  project         VideoProject @relation(fields: [projectId], references: [id])
+  storageUrl      String       @map("storage_url")
+  postedAt        DateTime?    @map("posted_at")
+  platformVideoId String?      @map("platform_video_id")
+
+  @@map("final_videos")
+}
+
+model GenerationQueue {
+  id         String       @id @default(cuid())
+  projectId  String       @map("project_id")
+  project    VideoProject @relation(fields: [projectId], references: [id])
+  status     String       @default("pending") // pending, processing, complete, failed
+  modelToUse String       @map("model_to_use")
+  priority   Int          @default(0)
+  retryCount Int          @default(0) @map("retry_count")
+  createdAt  DateTime     @default(now()) @map("created_at")
+
+  @@map("generation_queue")
+}

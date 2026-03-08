@@ -1,0 +1,32 @@
+<svg
+    width="100"
+    height="100"
+    viewBox="0 0 100 100"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+>
+    <defs>
+        <linearGradient id="janga-grad-favicon" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#3b82f6" />
+            <stop offset="100%" stopColor="#8b5cf6" />
+        </linearGradient>
+    </defs>
+    
+    <rect width="100" height="100" rx="24" fill="#0c0e14" />
+    
+    <path
+        d="M65 25V65C65 76.0457 56.0457 85 45 85C33.9543 85 25 76.0457 25 65"
+        stroke="url(#janga-grad-favicon)"
+        strokeWidth="12"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+    />
+    <path
+        d="M65 25C65 25 65 35 55 35C45 35 45 25 45 25"
+        stroke="url(#janga-grad-favicon)"
+        strokeWidth="12"
+        strokeLinecap="round"
+    />
+    
+    <circle cx="65" cy="25" r="4" fill="white" />
+</svg>
