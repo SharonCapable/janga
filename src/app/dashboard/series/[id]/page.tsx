@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import prisma from '@/utils/prisma'
 import Logo from '@/components/Logo'
 import Link from 'next/link'
+import EpisodeCard from '@/components/EpisodeCard'
 
 export default async function SeriesDetailPage(props: { params: Promise<{ id: string }> }) {
     const { id } = await props.params
@@ -88,22 +89,7 @@ export default async function SeriesDetailPage(props: { params: Promise<{ id: st
                             </div>
                         ) : (
                             series.episodes.map(ep => (
-                                <Link
-                                    key={ep.id}
-                                    href={`/dashboard/videos/${ep.id}`}
-                                    className="p-5 glass-card border border-white/5 rounded-2xl hover:border-white/20 transition-all group"
-                                >
-                                    <div className="flex items-center justify-between mb-4">
-                                        <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center group-hover:bg-blue-500/10 transition-colors">
-                                            <VideoIcon className="w-5 h-5 text-[#a1a1aa] group-hover:text-blue-400" />
-                                        </div>
-                                        <StatusBadge status={ep.status} />
-                                    </div>
-                                    <p className="font-bold text-sm line-clamp-2 mb-2">{ep.topic}</p>
-                                    <p className="text-[10px] text-[#52525b] uppercase font-bold tracking-widest">
-                                        {new Date(ep.createdAt).toLocaleDateString()}
-                                    </p>
-                                </Link>
+                                <EpisodeCard key={ep.id} episode={ep} />
                             ))
                         )}
                     </div>
@@ -126,20 +112,4 @@ function SidebarLink({ href, label, active = false }: { href: string; label: str
             {label}
         </Link>
     )
-}
-
-function StatusBadge({ status }: { status: string }) {
-    const cls = status === 'ready' ? 'bg-emerald-500/10 text-emerald-400'
-        : status === 'generating' ? 'bg-amber-500/10 text-amber-400'
-            : 'bg-white/5 text-[#52525b]'
-
-    return (
-        <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-md ${cls}`}>
-            {status}
-        </span>
-    )
-}
-
-function VideoIcon({ className }: { className?: string }) {
-    return <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
 }

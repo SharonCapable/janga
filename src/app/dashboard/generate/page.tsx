@@ -12,15 +12,19 @@ function GenerateForm() {
 
     const [series, setSeries] = useState<any[]>([])
     const [selectedSeriesId, setSelectedSeriesId] = useState(urlSeriesId || '')
-    const [topic, setTopic] = useState('')
+    const [topic, setTopic] = useState(searchParams.get('topic') || '')
     const [continueSeries, setContinueSeries] = useState(true)
     const [duration, setDuration] = useState<30 | 60>(60)
     const [submitting, setSubmitting] = useState(false)
     const [loadingSeries, setLoadingSeries] = useState(true)
 
     useEffect(() => {
+        const urlTopic = searchParams.get('topic')
+        if (urlTopic) setTopic(urlTopic)
+        const urlSid = searchParams.get('seriesId')
+        if (urlSid) setSelectedSeriesId(urlSid)
         fetchSeries()
-    }, [])
+    }, [searchParams])
 
     const fetchSeries = async () => {
         try {
