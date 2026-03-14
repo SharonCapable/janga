@@ -93,7 +93,7 @@ model VideoProject {
   userId            String           @map("user_id")
   user              User             @relation(fields: [userId], references: [id])
   seriesId          String?          @map("series_id")
-  series            ContentSeries?   @relation(fields: [seriesId], references: [id])
+  series            ContentSeries?   @relation(fields: [seriesId], references: [id], onDelete: Cascade)
   channelId         String?          @map("channel_id")
   channel           Channel?         @relation(fields: [channelId], references: [id])
   topic             String
@@ -113,7 +113,7 @@ model VideoProject {
 model GeneratedClip {
   id         String       @id @default(cuid())
   projectId  String       @map("project_id")
-  project    VideoProject @relation(fields: [projectId], references: [id])
+  project    VideoProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
   clipNumber Int          @map("clip_number")
   promptUsed String       @map("prompt_used")
   storageUrl String       @map("storage_url")
@@ -125,7 +125,7 @@ model GeneratedClip {
 model FinalVideo {
   id              String       @id @default(cuid())
   projectId       String       @map("project_id")
-  project         VideoProject @relation(fields: [projectId], references: [id])
+  project         VideoProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
   storageUrl      String       @map("storage_url")
   postedAt        DateTime?    @map("posted_at")
   platformVideoId String?      @map("platform_video_id")
@@ -136,7 +136,7 @@ model FinalVideo {
 model GenerationQueue {
   id         String       @id @default(cuid())
   projectId  String       @map("project_id")
-  project    VideoProject @relation(fields: [projectId], references: [id])
+  project    VideoProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
   status     String       @default("pending") // pending, processing, complete, failed
   modelToUse String       @map("model_to_use")
   priority   Int          @default(0)
