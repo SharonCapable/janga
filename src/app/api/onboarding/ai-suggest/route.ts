@@ -20,6 +20,7 @@ export async function POST(request: Request) {
                 "seriesName": "A catchy, short name for the series",
                 "niche": "The specific niche (e.g. Finance, Horror, Stoicism, AI News)",
                 "tone": "Descriptive tone (e.g. Cinematic, Dramatic, Fast-paced, Minimalist)",
+                "animationType": "One of: Realistic, Anime / Manga, 3D Render, Comic Book, Cyberpunk, Sketch / Hand-drawn",
                 "duration": 60,
                 "firstTopic": "A specific topic for the first episode"
             }

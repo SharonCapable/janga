@@ -65,6 +65,7 @@ export default function OnboardingPage() {
             setSeriesName(data.seriesName);
             setNiche(data.niche);
             setTone(data.tone);
+            if (data.animationType) setAnimationType(data.animationType);
             setDuration(data.duration.toString());
             setStep(3); // Jump to series review
         } catch (error) {

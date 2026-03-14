@@ -20,11 +20,21 @@ const PLATFORMS = [
     { id: 'youtube', label: 'YouTube Shorts' },
 ]
 
+const ANIMATION_TYPES = [
+    'Realistic',
+    'Anime / Manga',
+    '3D Render',
+    'Comic Book',
+    'Cyberpunk',
+    'Sketch / Hand-drawn'
+]
+
 export default function NewSeriesPage() {
     const router = useRouter()
     const [name, setName] = useState('')
     const [niche, setNiche] = useState('')
     const [tone, setTone] = useState('')
+    const [animationType, setAnimationType] = useState('Realistic')
     const [duration, setDuration] = useState('60')
     const [platform, setPlatform] = useState('tiktok')
     const [submitting, setSubmitting] = useState(false)
@@ -41,6 +51,7 @@ export default function NewSeriesPage() {
                     seriesName: name,
                     niche,
                     tone,
+                    animationType,
                     duration,
                     platform
                 }),
@@ -142,6 +153,18 @@ export default function NewSeriesPage() {
                                         <option value="90">90 Seconds</option>
                                     </select>
                                 </div>
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-bold text-[#52525b] uppercase tracking-widest ml-1">Animation Style</label>
+                                <select
+                                    required
+                                    className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 mt-2 text-sm outline-none focus:border-primary appearance-none"
+                                    value={animationType}
+                                    onChange={(e) => setAnimationType(e.target.value)}
+                                >
+                                    {ANIMATION_TYPES.map(a => <option key={a} value={a}>{a}</option>)}
+                                </select>
                             </div>
                         </div>
                     </div>

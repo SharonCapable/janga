@@ -2,8 +2,18 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Janga — Autonomous Video Generation",
-  description: "Generate and post high-retention faceless videos to TikTok and YouTube on autopilot.",
+  title: "Janga — The Autonomous Video Factory",
+  description: "Scale your reach with fully autonomous video content generation for TikTok and YouTube.",
+  icons: {
+    icon: [
+      { url: '/favicon.ico' },
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+  },
 };
 
 export default function RootLayout({
@@ -13,9 +23,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <head>
-        <link rel="icon" href="/logo.svg" type="image/svg+xml" />
-      </head>
       <body className="min-h-screen bg-background text-text-primary font-sans antialiased">
         {children}
       </body>
