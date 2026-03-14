@@ -1,6 +1,49 @@
 import Link from 'next/link';
 import Logo from '@/components/Logo';
 import { redirect } from 'next/navigation';
+import LoginForm from '@/components/LoginForm';
+
+const Scribbles = () => {
+  const rhyme = "The quick brown fox jumps over the lazy dog. ".repeat(60);
+
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none z-0 opacity-40 mix-blend-screen">
+      <svg className="w-full h-full text-[#60a5fa]/30" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path id="p1" d="M -100 200 C 200 400, 600 0, 1100 300" stroke="currentColor" strokeWidth="1" strokeDasharray="4 4" />
+        <text fill="currentColor" fontSize="16" letterSpacing="3" className="uppercase font-mono opacity-80" dominantBaseline="middle">
+          <textPath href="#p1" startOffset="0%">
+            {rhyme}
+            <animate attributeName="startOffset" from="0%" to="-100%" dur="140s" repeatCount="indefinite" />
+          </textPath>
+        </text>
+
+        <path id="p2" d="M 1100 600 C 800 400, 400 900, -100 700" stroke="currentColor" strokeWidth="0.5" />
+        <text fill="currentColor" fontSize="12" letterSpacing="4" className="uppercase font-mono opacity-60" dominantBaseline="middle">
+          <textPath href="#p2" startOffset="0%">
+            {rhyme}
+            <animate attributeName="startOffset" from="0%" to="-100%" dur="170s" repeatCount="indefinite" />
+          </textPath>
+        </text>
+
+        <path id="p3" d="M 200 -100 C 400 300, 0 700, 300 1100" stroke="currentColor" strokeWidth="1" strokeDasharray="2 6" />
+        <text fill="currentColor" fontSize="22" letterSpacing="2" className="uppercase opacity-30" dominantBaseline="middle">
+          <textPath href="#p3" startOffset="0%">
+            {rhyme}
+            <animate attributeName="startOffset" from="0%" to="-100%" dur="110s" repeatCount="indefinite" />
+          </textPath>
+        </text>
+
+        <path id="p4" d="M 800 -100 C 600 400, 1000 600, 700 1100" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <text fill="currentColor" fontSize="14" letterSpacing="1" className="uppercase opacity-20" dominantBaseline="middle">
+          <textPath href="#p4" startOffset="0%">
+            {rhyme}
+            <animate attributeName="startOffset" from="0%" to="-100%" dur="130s" repeatCount="indefinite" />
+          </textPath>
+        </text>
+      </svg>
+    </div>
+  );
+};
 
 export default async function Home(props: { searchParams: Promise<{ code?: string }> }) {
   const searchParams = await props.searchParams;
@@ -10,133 +53,79 @@ export default async function Home(props: { searchParams: Promise<{ code?: strin
   }
 
   return (
-    <main className="min-h-screen bg-[#050505] text-white selection:bg-purple-500/30 selection:text-white font-sans overflow-x-hidden">
-      {/* Premium Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-12 py-6 backdrop-blur-xl bg-black/40 border-b border-white/[0.05]">
-        <Logo size={32} showText={true} />
-        <div className="flex items-center gap-6">
-          <Link href="/login" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors hidden md:block">
-            Login
-          </Link>
-          <Link
-            href="/login"
-            className="px-6 py-2.5 text-sm font-bold text-black transition-all bg-white rounded-full hover:bg-zinc-200 shadow-lg shadow-white/5 active:scale-95"
-          >
-            Start Factory
-          </Link>
-        </div>
-      </nav>
+    <main className="min-h-screen text-white flex flex-col md:flex-row font-sans overflow-hidden relative bg-gradient-to-br from-[#164a80] via-[#091b3e] to-[#01030a]">
+      {/* Global Background Elements */}
+      <div className="absolute top-[-20%] left-[-10%] w-[80%] h-[80%] bg-[#3b82f6]/10 rounded-full blur-[140px] pointer-events-none z-0" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[70%] h-[70%] bg-[#2563eb]/10 rounded-full blur-[120px] pointer-events-none z-0" />
+      <Scribbles />
 
-      {/* Hero Section: The "Transcend" Style */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center pt-20 px-6 overflow-hidden">
-        {/* Animated Background Mesh */}
-        <div className="absolute top-0 left-0 w-full h-full -z-10">
-          <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-purple-600/20 rounded-full blur-[120px] animate-pulse" />
-          <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-pink-600/20 rounded-full blur-[120px] animate-pulse delay-700" />
-          <div className="absolute top-[20%] right-[10%] w-[30%] h-[30%] bg-blue-600/10 rounded-full blur-[100px]" />
+      {/* Left Column: Info & Branding */}
+      <section className="relative w-full md:w-1/2 p-8 md:p-16 flex flex-col justify-between overflow-hidden z-10">
+        <div className="relative z-10 w-fit">
+          <Logo size={48} showText={true} />
         </div>
 
-        {/* Hero Content */}
-        <div className="max-w-6xl w-full text-center relative">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 mb-8 animate-fade-in">
-            <div className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-ping" />
-            <span className="text-[10px] uppercase font-black tracking-[0.2em] text-white/60">The New Era of Video</span>
+        <div className="relative z-10 max-w-lg mt-16 md:mt-0">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#1f69b5]/20 border border-[#1f69b5]/30 mb-6 drop-shadow-md">
+            <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+            <span className="text-[10px] uppercase font-bold tracking-widest text-blue-200">Autonomous Content</span>
           </div>
-
-          <h1 className="text-6xl md:text-8xl lg:text-9xl font-black tracking-tighter leading-[0.85] text-white mb-8 animate-fade-in uppercase italic">
-            Beyond <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500">Generation</span>
+          
+          <h1 className="text-5xl md:text-6xl font-black tracking-tighter leading-[1.1] text-white mb-6 uppercase drop-shadow-lg">
+            Welcome to <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-blue-200">Janga</span>
           </h1>
 
-          <p className="max-w-xl mx-auto text-lg text-zinc-400 md:text-xl font-medium tracking-tight mb-12 animate-fade-in delay-100 italic">
-            Janga is the world's first autonomous video factory. Connect once, scale forever.
+          <p className="text-lg text-blue-100/70 font-medium leading-relaxed mb-6">
+            The world's first fully autonomous video factory. Stop worrying about scripts, stock footage, and posting schedules. Connect your channels once, and watch your influence scale automatically on TikTok and YouTube.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in delay-200">
-            <Link
-              href="/login"
-              className="group relative px-12 py-5 text-xl font-black text-white transition-all bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 opacity-0 group-hover:opacity-20 transition-opacity" />
-              CREATE YOUR SERIES
-            </Link>
+          <div className="flex flex-col gap-4 mt-8">
+            <div className="flex items-center gap-4 text-sm font-semibold text-blue-100">
+              <span className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-blue-300 text-xs border border-white/10">1</span>
+              Research trends effortlessly
+            </div>
+            <div className="flex items-center gap-4 text-sm font-semibold text-blue-100">
+              <span className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-blue-300 text-xs border border-white/10">2</span>
+              Generate captivating 60s videos
+            </div>
+            <div className="flex items-center gap-4 text-sm font-semibold text-blue-100">
+              <span className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-blue-300 text-xs border border-white/10">3</span>
+              Automate your global reach
+            </div>
           </div>
         </div>
 
-        {/* Decorative Element: Floating Dashboards Sketch */}
-        <div className="mt-24 w-full max-w-5xl aspect-video rounded-[32px] border border-white/10 bg-gradient-to-b from-white/10 to-transparent p-[1px] relative animate-fade-in delay-300">
-          <div className="w-full h-full bg-[#050505] rounded-[31px] overflow-hidden p-8 flex flex-col justify-center items-center">
-            <div className="text-center">
-              <div className="text-4xl font-black mb-2 italic">FACTORY STATUS: <span className="text-emerald-500">LIVE</span></div>
-              <div className="text-zinc-500 font-mono text-sm tracking-widest">AWAITING CONNECTION...</div>
-            </div>
-          </div>
-          {/* Accent Glow */}
-          <div className="absolute -inset-1 bg-gradient-to-r from-purple-600/20 to-pink-600/20 blur-2xl -z-10" />
+        <div className="relative z-10 mt-16 md:mt-0 text-[10px] text-blue-200/50 font-mono tracking-widest uppercase">
+          © 2026 Janga Platform. Beyond Creative.
         </div>
       </section>
 
-      {/* Philosophy Section */}
-      <section className="max-w-7xl mx-auto px-6 py-40 grid grid-cols-1 md:grid-cols-2 gap-20 items-center">
-        <div>
-          <h2 className="text-5xl font-black tracking-tighter leading-none mb-8 uppercase italic">
-            Automate <br />
-            your <span className="text-zinc-600">influence</span>
-          </h2>
-          <p className="text-zinc-400 text-lg leading-relaxed mb-6 font-medium">
-            Stop worrying about scripts, stock footage, and posting schedules. Janga researches the trends, writes the narrative, and builds the visual story for you.
-          </p>
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center gap-4 border-l-2 border-purple-500 pl-6 py-2">
-              <span className="text-2xl font-black italic">01. RESEARCH</span>
-            </div>
-            <div className="flex items-center gap-4 border-l-2 border-pink-500 pl-6 py-2">
-              <span className="text-2xl font-black italic">02. GENERATE</span>
-            </div>
-            <div className="flex items-center gap-4 border-l-2 border-blue-500 pl-6 py-2">
-              <span className="text-2xl font-black italic">03. SCALE</span>
-            </div>
-          </div>
-        </div>
-        <div className="relative aspect-square rounded-[40px] bg-white/5 border border-white/10 flex items-center justify-center shadow-2xl overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-pink-500/20" />
-          <PlayButton className="w-24 h-24 text-white drop-shadow-2xl" />
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="py-32 px-12 border-t border-white/5 bg-black">
-        <div className="flex flex-col md:flex-row justify-between items-start gap-12 max-w-7xl mx-auto">
-          <div>
-            <Logo size={40} showText={true} />
-            <p className="mt-4 text-zinc-500 max-w-xs text-sm">
-              The first autonomous content factory for the next generation of social influence.
+      {/* Right Column: Login panel */}
+      <section className="w-full md:w-1/2 flex items-center justify-center p-8 md:p-16 relative z-10">
+        <div className="w-full max-w-[400px]">
+          <div className="bg-[#030712]/40 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-10 shadow-[0_0_100px_rgba(37,99,235,0.1)] relative overflow-hidden">
+            {/* Subtle glow behind login card */}
+            <div className="absolute top-0 right-0 w-40 h-40 bg-[#3b82f6]/20 blur-[80px]" />
+            
+            <h2 className="text-3xl font-bold mb-3 tracking-tight text-white relative z-10">
+              Your Factory
+            </h2>
+            <p className="text-sm text-blue-100/50 mb-10 relative z-10">
+              Connect via Google to access the dashboard and manage your video series.
             </p>
-          </div>
-          <div className="grid grid-cols-2 gap-20">
-            <div className="flex flex-col gap-4">
-              <span className="text-xs font-black uppercase tracking-widest text-[#52525b]">Legal</span>
-              <Link href="/privacy" className="text-sm text-zinc-500 hover:text-white transition-colors">Privacy Policy</Link>
-              <Link href="/terms" className="text-sm text-zinc-500 hover:text-white transition-colors">Terms of Service</Link>
+
+            <div className="relative z-10">
+              <LoginForm />
             </div>
-            <div className="flex flex-col gap-4">
-              <span className="text-xs font-black uppercase tracking-widest text-[#52525b]">Contact</span>
-              <span className="text-sm text-zinc-500">senyonam557@gmail.com</span>
+
+            <div className="mt-10 pt-8 border-t border-white/10 flex gap-6 justify-center">
+              <Link href="/privacy" className="text-xs text-blue-200/30 hover:text-blue-200/60 transition-colors">Privacy Policy</Link>
+              <Link href="/terms" className="text-xs text-blue-200/30 hover:text-blue-200/60 transition-colors">Terms of Service</Link>
             </div>
           </div>
         </div>
-        <div className="mt-20 pt-8 border-t border-white/5 text-center text-xs text-zinc-700 font-mono">
-          © 2026 JANGA PLATFORM. BEYOND CREATIVE.
-        </div>
-      </footer>
+      </section>
     </main>
   );
-}
-
-function PlayButton({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M8 5v14l11-7z" />
-    </svg>
-  )
 }

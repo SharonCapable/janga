@@ -6,15 +6,14 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 export async function POST(request: Request) {
     const { keywords } = await request.json();
 
-    if (!keywords) {
-        return NextResponse.json({ error: 'Keywords are required' }, { status: 400 });
-    }
+    const fallbackKeywords = "A completely random, high-retention viral faceless channel concept in any niche";
+    const targetKeywords = keywords || fallbackKeywords;
 
     try {
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
         const prompt = `
-            You are a viral content strategist. A user wants to start an AI video series based on these keywords: "${keywords}".
+            You are a viral content strategist. A user wants to start an AI video series based on these keywords: "${targetKeywords}".
             
             Based on these, generate a professional content strategy in JSON format:
             {

@@ -54,6 +54,11 @@ function GenerateForm() {
             })
             const data = await res.json()
             if (data.success) {
+                await fetch('/api/start-pipeline', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ projectId: data.projectId })
+                })
                 router.push('/dashboard')
             }
         } catch {
@@ -119,7 +124,7 @@ function GenerateForm() {
                             className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-primary outline-none appearance-none"
                         >
                             {series.map(s => (
-                                <option key={s.id} value={s.id}>{s.name} ({s.niche})</option>
+                                <option key={s.id} value={s.id} className="bg-zinc-900 text-white">{s.name} ({s.niche})</option>
                             ))}
                         </select>
                     )}

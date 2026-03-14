@@ -19,6 +19,15 @@ const PLATFORMS = [
     { id: 'youtube', label: 'YouTube Shorts' },
 ]
 
+const ANIMATION_TYPES = [
+    'Realistic',
+    'Anime / Manga',
+    '3D Render',
+    'Comic Book',
+    'Cyberpunk',
+    'Sketch / Hand-drawn'
+]
+
 export default function OnboardingPage() {
     const router = useRouter()
     const [step, setStep] = useState(1)
@@ -30,6 +39,7 @@ export default function OnboardingPage() {
     const [seriesName, setSeriesName] = useState('')
     const [niche, setNiche] = useState('')
     const [tone, setTone] = useState('')
+    const [animationType, setAnimationType] = useState('Realistic')
     const [duration, setDuration] = useState('60')
 
     // AI Helpers
@@ -44,7 +54,6 @@ export default function OnboardingPage() {
     }
 
     const handleAiSuggest = async () => {
-        if (!keywords) return;
         setIsAiLoading(true);
         try {
             const res = await fetch('/api/onboarding/ai-suggest', {
@@ -75,6 +84,7 @@ export default function OnboardingPage() {
                     seriesName,
                     niche,
                     tone,
+                    animationType,
                     duration,
                     platforms: selectedPlatforms,
                     primaryPlatform: selectedPlatforms[0] || 'tiktok'
@@ -158,7 +168,7 @@ export default function OnboardingPage() {
                                     />
                                     <button
                                         onClick={handleAiSuggest}
-                                        disabled={!keywords || isAiLoading}
+                                        disabled={isAiLoading}
                                         className="absolute right-2 top-2 bottom-2 px-3 bg-primary/20 text-primary text-xs font-bold rounded-lg hover:bg-primary/30 transition-colors disabled:opacity-50"
                                     >
                                         {isAiLoading ? 'Thinking...' : 'AI Magic'}
@@ -217,10 +227,21 @@ export default function OnboardingPage() {
                                         value={tone}
                                         onChange={(e) => setTone(e.target.value)}
                                     >
-                                        <option value="">Select Tone</option>
-                                        {TONES.map(t => <option key={t} value={t}>{t}</option>)}
+                                        <option value="" className="bg-zinc-900 text-white">Select Tone</option>
+                                        {TONES.map(t => <option key={t} value={t} className="bg-zinc-900 text-white">{t}</option>)}
                                     </select>
                                 </div>
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-semibold text-zinc-500 uppercase ml-1">Animation Style</label>
+                                <select
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 mt-2 text-sm outline-none focus:border-primary appearance-none"
+                                    value={animationType}
+                                    onChange={(e) => setAnimationType(e.target.value)}
+                                >
+                                    {ANIMATION_TYPES.map(a => <option key={a} value={a} className="bg-zinc-900 text-white">{a}</option>)}
+                                </select>
                             </div>
                         </div>
 

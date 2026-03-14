@@ -73,8 +73,6 @@ export async function POST(request: Request) {
             status: 'pending',
             modelToUse: 'cogvideox-5b',
             priority: 0,
-            // Imagine we added a 'context' field to metadata here or in the future
-            // For now, the worker will see the 'topic' which contains our continuation instructions
         },
     })
 

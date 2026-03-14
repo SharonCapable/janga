@@ -38,6 +38,7 @@ model ContentSeries {
   episodes     VideoProject[]
   createdAt    DateTime       @default(now()) @map("created_at")
   autoSchedule Boolean        @default(false) @map("auto_schedule")
+  animationType String?        @map("animation_type")
 
   @@map("content_series")
 }
@@ -98,9 +99,10 @@ model VideoProject {
   topic             String
   modelVersion      String           @default("cogvideox-5b") @map("model_version")
   duration          Int              @default(60)
-  status            String           @default("draft") // draft, generating, ready, posted
+  status            String           @default("draft") // draft, generating, booting, ready, error, posted
   scheduledPostTime DateTime?        @map("scheduled_post_time")
   createdAt         DateTime         @default(now()) @map("created_at")
+  animationType     String?          @map("animation_type")
   clips             GeneratedClip[]
   finalVideos       FinalVideo[]
   queueItems        GenerationQueue[]
@@ -140,6 +142,8 @@ model GenerationQueue {
   priority   Int          @default(0)
   retryCount Int          @default(0) @map("retry_count")
   createdAt  DateTime     @default(now()) @map("created_at")
+  errorMessage String?      @map("error_message")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
 
   @@map("generation_queue")
 }

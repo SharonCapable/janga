@@ -16,7 +16,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { seriesName, niche, tone, duration, platform } = await request.json()
+    const { seriesName, niche, tone, animationType, duration, platform } = await request.json()
 
     // Create the first series for the user
     await prisma.$transaction([
@@ -26,6 +26,7 @@ export async function POST(request: Request) {
                 name: seriesName || `${niche} Chronicles`,
                 niche,
                 tone,
+                animationType,
                 duration: parseInt(duration) || 60,
                 platform: platform || 'tiktok',
             }
