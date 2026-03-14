@@ -62,7 +62,7 @@ export default async function Home(props: { searchParams: Promise<{ code?: strin
       {/* Left Column: Info & Branding */}
       <section className="relative w-full md:w-1/2 p-8 md:p-16 flex flex-col justify-between overflow-hidden z-10">
         <div className="relative z-10 w-fit">
-          <Logo size={48} showText={true} />
+          <Logo size={48} showText={true} showIcon={false} />
         </div>
 
         <div className="relative z-10 max-w-lg mt-16 md:mt-0">

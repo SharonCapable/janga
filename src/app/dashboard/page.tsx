@@ -133,7 +133,7 @@ export default async function Dashboard() {
                                             <PlayFillIcon className="w-4 h-4" />
                                             Generate
                                         </Link>
-                                        <Link href={`/dashboard/series/${s.id}`} className="text-[10px] font-black text-white/20 hover:text-white/60 tracking-widest uppercase py-1 px-2">
+                                        <Link href={`/dashboard/series/${s.id}/settings`} className="text-[10px] font-black text-white/20 hover:text-white/60 tracking-widest uppercase py-1 px-2">
                                             Configure Settings
                                         </Link>
                                     </div>

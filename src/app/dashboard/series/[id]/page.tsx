@@ -65,9 +65,14 @@ export default async function SeriesDetailPage(props: { params: Promise<{ id: st
                             Duration: <strong>{series.duration}s</strong>
                         </p>
                     </div>
-                    <Link href={`/dashboard/generate?seriesId=${series.id}`} className="px-8 py-3 bg-white text-black text-sm font-black rounded-2xl hover:bg-zinc-200 transition-all flex items-center gap-2 shadow-xl shadow-white/5">
-                        Generate Episode
-                    </Link>
+                    <div className="flex items-center gap-3">
+                        <Link href={`/dashboard/series/${series.id}/settings`} className="px-6 py-3 border border-white/10 text-white text-sm font-bold rounded-2xl hover:bg-white/5 transition-all">
+                            Series Settings
+                        </Link>
+                        <Link href={`/dashboard/generate?seriesId=${series.id}`} className="px-8 py-3 bg-white text-black text-sm font-black rounded-2xl hover:bg-zinc-200 transition-all flex items-center gap-2 shadow-xl shadow-white/5">
+                            Generate Episode
+                        </Link>
+                    </div>
                 </header>
 
                 <section>

@@ -4,22 +4,25 @@ import Image from 'next/image';
 interface LogoProps {
     size?: number;
     showText?: boolean;
+    showIcon?: boolean;
     className?: string;
 }
 
-export default function Logo({ size = 40, showText = true, className = "" }: LogoProps) {
+export default function Logo({ size = 40, showText = true, showIcon = true, className = "" }: LogoProps) {
     return (
         <div className={`flex items-center gap-3 bg-transparent p-0 ${className}`}>
-            <div style={{ width: size, height: size, position: 'relative' }} className="drop-shadow-2xl">
-                <Image
-                    src="/logo.png"
-                    alt="Janga Logo"
-                    fill
-                    sizes={`${size}px`}
-                    style={{ objectFit: 'contain' }}
-                    priority
-                />
-            </div>
+            {showIcon && (
+                <div style={{ width: size, height: size, position: 'relative' }} className="drop-shadow-2xl">
+                    <Image
+                        src="/logo.png"
+                        alt="Janga Logo"
+                        fill
+                        sizes={`${size}px`}
+                        style={{ objectFit: 'contain' }}
+                        priority
+                    />
+                </div>
+            )}
             {showText && (
                 <span className="font-black uppercase tracking-tighter" style={{
                     fontSize: size * 0.7,
