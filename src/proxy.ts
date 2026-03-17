@@ -41,6 +41,9 @@ export async function proxy(request: NextRequest) {
         !request.nextUrl.pathname.startsWith('/auth') &&
         !request.nextUrl.pathname.startsWith('/privacy') &&
         !request.nextUrl.pathname.startsWith('/terms') &&
+        !request.nextUrl.pathname.startsWith('/api/worker') &&
+        !request.nextUrl.pathname.startsWith('/api/start-pipeline') &&
+        !request.nextUrl.pathname.startsWith('/api/jobs/timeout') &&
         request.nextUrl.pathname !== '/'
     ) {
         // no user, potentially respond by redirecting the user to the login page
