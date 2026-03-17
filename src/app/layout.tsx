@@ -3,6 +3,9 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Janga — The Autonomous Video Factory",
+  verification: {
+    google: 'tjja0QkMjmsMW7LojT3pdFfStrkJWiz9h7DQVU4WO5k',
+  },
   description: "Scale your reach with fully autonomous video content generation for TikTok and YouTube.",
   icons: {
     icon: [

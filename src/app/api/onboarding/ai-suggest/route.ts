@@ -10,7 +10,7 @@ export async function POST(request: Request) {
     const targetKeywords = keywords || fallbackKeywords;
 
     try {
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
         const prompt = `
             You are a viral content strategist. A user wants to start an AI video series based on these keywords: "${targetKeywords}".

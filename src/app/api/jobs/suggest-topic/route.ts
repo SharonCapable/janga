@@ -26,7 +26,7 @@ export async function POST(request: Request) {
     if (!series) return NextResponse.json({ error: 'Series not found' }, { status: 404 });
 
     try {
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
         const prompt = `
             You are a viral content strategist for a video series called "${series.name}".

@@ -31,9 +31,16 @@ export async function proxy(request: NextRequest) {
     // getUser(). A simple mistake could make it very hard to debug
     // issues with sessions being lost.
 
-    const {
-        data: { user },
-    } = await supabase.auth.getUser()
+    let user = null;
+    if (
+        !request.nextUrl.pathname.startsWith('/api/jobs/suggest-topic') &&
+        !request.nextUrl.pathname.startsWith('/api/worker') &&
+        !request.nextUrl.pathname.startsWith('/api/start-pipeline') &&
+        !request.nextUrl.pathname.startsWith('/api/jobs/timeout')
+    ) {
+        const { data: { user: authUser } } = await supabase.auth.getUser()
+        user = authUser;
+    }
 
     if (
         !user &&
@@ -44,6 +51,7 @@ export async function proxy(request: NextRequest) {
         !request.nextUrl.pathname.startsWith('/api/worker') &&
         !request.nextUrl.pathname.startsWith('/api/start-pipeline') &&
         !request.nextUrl.pathname.startsWith('/api/jobs/timeout') &&
+        !request.nextUrl.pathname.startsWith('/api/jobs/suggest-topic') &&
         request.nextUrl.pathname !== '/'
     ) {
         // no user, potentially respond by redirecting the user to the login page
