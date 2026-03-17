@@ -36,7 +36,8 @@ export async function proxy(request: NextRequest) {
         !request.nextUrl.pathname.startsWith('/api/jobs/suggest-topic') &&
         !request.nextUrl.pathname.startsWith('/api/worker') &&
         !request.nextUrl.pathname.startsWith('/api/start-pipeline') &&
-        !request.nextUrl.pathname.startsWith('/api/jobs/timeout')
+        !request.nextUrl.pathname.startsWith('/api/jobs/timeout') &&
+        !request.nextUrl.pathname.startsWith('/api/connect/youtube')
     ) {
         const { data: { user: authUser } } = await supabase.auth.getUser()
         user = authUser;
@@ -52,6 +53,7 @@ export async function proxy(request: NextRequest) {
         !request.nextUrl.pathname.startsWith('/api/start-pipeline') &&
         !request.nextUrl.pathname.startsWith('/api/jobs/timeout') &&
         !request.nextUrl.pathname.startsWith('/api/jobs/suggest-topic') &&
+        !request.nextUrl.pathname.startsWith('/api/connect') &&
         request.nextUrl.pathname !== '/'
     ) {
         // no user, potentially respond by redirecting the user to the login page

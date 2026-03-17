@@ -10,5 +10,5 @@ export async function GET() {
 
     const tiktokAuthUrl = `https://www.tiktok.com/v2/auth/authorize/?client_key=${clientKey}&scope=${scope}&response_type=code&redirect_uri=${redirectUri}&state=${state}`;
 
-    return NextResponse.redirect(tiktokAuthUrl);
+    return NextResponse.redirect(tiktokAuthUrl, 302);
 }
